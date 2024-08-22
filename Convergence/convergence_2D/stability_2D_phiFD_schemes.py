@@ -29,7 +29,7 @@ Iter = 3 if conditioning else 6
 
 # Polynome Pk
 polV = 1
-polPhi = polV
+polPhi = polV + 1
 # parameters["form_compiler"]["quadrature_degree"]=2*(polV+polPhi)
 
 # Ghost penalty
@@ -249,14 +249,14 @@ for ii in range(len(NN)):
             D = sp.diags(diagonals=indOut.ravel())
             npcoef = (gamma / hx / hy) * np.array(coef)
             B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
-            C1 = (
+            C = (
                 sigma
                 * hx
                 * hy
                 * (D2x_2d.T @ maskGx @ D2x_2d + D2y_2d.T @ maskGy @ D2y_2d)
             )
 
-            A = (A + B + C1 + D).tocsr()
+            A = (A + B + C + D).tocsr()
             u = spsolve(A, b).reshape(Ny + 1, Nx + 1)
             e = u - uref
 
@@ -409,19 +409,15 @@ for iii in range(len(NN)):
             D2y_2d = sp.kron(D2y, sp.eye(Nx + 1))
 
             A = mask @ (D2x_2d + D2y_2d)
-
             # boundary conditions
-            # will create the matrix in COOrdinate format, i.e. the triplets (row,col,coef)
             row = []
             col = []
             coef = []  # for the matrix implementing BC
-
-            def rav(i, j):
-                return np.ravel_multi_index([j, i], (Ny + 1, Nx + 1))
+            fb = np.zeros((Ny + 1, Nx + 1))  # for the RHS corresponding to BC
 
             def AddMat(eq, i, j, a):
                 row.append(eq)
-                col.append(rav(i, j))
+                col.append(i + (Nx + 1) * j)
                 coef.append(a)
 
             # active sites for the ghost penalty
@@ -443,15 +439,15 @@ for iii in range(len(NN)):
                 aim1 = -phiij[j, i] * phiij[j, i + 1]
                 aip1 = -phiij[j, i] * phiij[j, i - 1]
                 phiS = ai**2 + aim1**2 + aip1**2
-                AddMat(rav(i - 1, j), i - 1, j, aim1 * aim1 / phiS)
-                AddMat(rav(i - 1, j), i, j, aim1 * ai / phiS)
-                AddMat(rav(i - 1, j), i + 1, j, aim1 * aip1 / phiS)
-                AddMat(rav(i, j), i - 1, j, ai * aim1 / phiS)
-                AddMat(rav(i, j), i, j, ai * ai / phiS)
-                AddMat(rav(i, j), i + 1, j, ai * aip1 / phiS)
-                AddMat(rav(i + 1, j), i - 1, j, aip1 * aim1 / phiS)
-                AddMat(rav(i + 1, j), i, j, aip1 * ai / phiS)
-                AddMat(rav(i + 1, j), i + 1, j, aip1 * aip1 / phiS)
+                AddMat(i - 1 + (Nx + 1) * j, i - 1, j, aim1 * aim1 / phiS)
+                AddMat(i - 1 + (Nx + 1) * j, i, j, aim1 * ai / phiS)
+                AddMat(i - 1 + (Nx + 1) * j, i + 1, j, aim1 * aip1 / phiS)
+                AddMat(i + (Nx + 1) * j, i - 1, j, ai * aim1 / phiS)
+                AddMat(i + (Nx + 1) * j, i, j, ai * ai / phiS)
+                AddMat(i + (Nx + 1) * j, i + 1, j, ai * aip1 / phiS)
+                AddMat(i + 1 + (Nx + 1) * j, i - 1, j, aip1 * aim1 / phiS)
+                AddMat(i + 1 + (Nx + 1) * j, i, j, aip1 * ai / phiS)
+                AddMat(i + 1 + (Nx + 1) * j, i + 1, j, aip1 * aip1 / phiS)
 
             indy = ind[1 : Ny + 1, :] - ind[0:Ny, :]
             J, I = np.where((indy == 1) | (indy == -1))
@@ -468,104 +464,108 @@ for iii in range(len(NN)):
                 aim1 = -phiij[j, i] * phiij[j + 1, i]
                 aip1 = -phiij[j, i] * phiij[j - 1, i]
                 phiS = ai**2 + aim1**2 + aip1**2
-                AddMat(rav(i, j - 1), i, j - 1, aim1 * aim1 / phiS)
-                AddMat(rav(i, j - 1), i, j, aim1 * ai / phiS)
-                AddMat(rav(i, j - 1), i, j + 1, aim1 * aip1 / phiS)
-                AddMat(rav(i, j), i, j - 1, ai * aim1 / phiS)
-                AddMat(rav(i, j), i, j, ai * ai / phiS)
-                AddMat(rav(i, j), i, j + 1, ai * aip1 / phiS)
-                AddMat(rav(i, j + 1), i, j - 1, aip1 * aim1 / phiS)
-                AddMat(rav(i, j + 1), i, j, aip1 * ai / phiS)
-                AddMat(rav(i, j + 1), i, j + 1, aip1 * aip1 / phiS)
+                AddMat(i + (Nx + 1) * (j - 1), i, j - 1, aim1 * aim1 / phiS)
+                AddMat(i + (Nx + 1) * (j - 1), i, j, aim1 * ai / phiS)
+                AddMat(i + (Nx + 1) * (j - 1), i, j + 1, aim1 * aip1 / phiS)
+                AddMat(i + (Nx + 1) * j, i, j - 1, ai * aim1 / phiS)
+                AddMat(i + (Nx + 1) * j, i, j, ai * ai / phiS)
+                AddMat(i + (Nx + 1) * j, i, j + 1, ai * aip1 / phiS)
+                AddMat(i + (Nx + 1) * (j + 1), i, j - 1, aip1 * aim1 / phiS)
+                AddMat(i + (Nx + 1) * (j + 1), i, j, aip1 * ai / phiS)
+                AddMat(i + (Nx + 1) * (j + 1), i, j + 1, aip1 * aip1 / phiS)
 
             # penalistion of the boundary condition
             npcoef = (gamma / hx / hy) * np.array(coef)
             B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
-
             row = []
             col = []
             coef = []  # for the matrix implementing BC
 
-            def rav(i, j):
-                return np.ravel_multi_index([j, i], (Ny + 1, Nx + 1))
-
             def AddMat(eq, i, j, a):
                 row.append(eq)
-                col.append(rav(i, j))
+                col.append(i + (Nx + 1) * j)
                 coef.append(a)
+
+            # active sites for the ghost penalty
+            actGx = np.zeros((Ny + 1, Nx + 1))
+            actGy = np.zeros((Ny + 1, Nx + 1))
 
             indx = ind[:, 1 : Nx + 1] - ind[:, 0:Nx]
             J, I = np.where((indx == 1) | (indx == -1))
             for k in range(np.shape(I)[0]):
                 if indx[J[k], I[k]] == 1:
-                    ii, j = I[k] + 1, J[k]
+                    i, j = I[k] + 1, J[k]
+                    i_ = i
                 else:
-                    ii, j = I[k], J[k]
+                    i, j = I[k], J[k]
+                    i_ = i - 1
                 if (
-                    ind[j, ii - 1] == 0
-                    and ind[j, ii] == 1
-                    and ind[j, ii + 1] == 1
-                    and ind[j, ii + 2] == 1
+                    ind[j, i_ - 1] == 0
+                    and ind[j, i_] == 1
+                    and ind[j, i_ + 1] == 1
+                    and ind[j, i_ + 2] == 1
                 ) or (
-                    ind[j, ii - 1] == 1
-                    and ind[j, ii] == 1
-                    and ind[j, ii + 1] == 1
-                    and ind[j, ii + 2] == 0
+                    ind[j, i_ - 1] == 1
+                    and ind[j, i_] == 1
+                    and ind[j, i_ + 1] == 1
+                    and ind[j, i_ + 2] == 0
                 ):
-                    AddMat(rav(ii - 1, j), ii - 1, j, 1.0)
-                    AddMat(rav(ii - 1, j), ii, j, -3.0)
-                    AddMat(rav(ii - 1, j), ii + 1, j, 3.0)
-                    AddMat(rav(ii - 1, j), ii + 2, j, -1.0)
-                    AddMat(rav(ii, j), ii - 1, j, -3.0)
-                    AddMat(rav(ii, j), ii, j, 9.0)
-                    AddMat(rav(ii, j), ii + 1, j, -9.0)
-                    AddMat(rav(ii, j), ii + 2, j, 3.0)
-                    AddMat(rav(ii + 1, j), ii - 1, j, 3.0)
-                    AddMat(rav(ii + 1, j), ii, j, -9.0)
-                    AddMat(rav(ii + 1, j), ii + 1, j, 9.0)
-                    AddMat(rav(ii + 1, j), ii + 2, j, -3.0)
-                    AddMat(rav(ii + 2, j), ii - 1, j, -1.0)
-                    AddMat(rav(ii + 2, j), ii, j, 3.0)
-                    AddMat(rav(ii + 2, j), ii + 1, j, -3.0)
-                    AddMat(rav(ii + 2, j), ii + 2, j, 1.0)
+                    AddMat(i_ - 1 + (Nx + 1) * j, i_ - 1, j, sigma)
+                    AddMat(i_ - 1 + (Nx + 1) * j, i_, j, -3 * sigma)
+                    AddMat(i_ - 1 + (Nx + 1) * j, i_ + 1, j, 3 * sigma)
+                    AddMat(i_ - 1 + (Nx + 1) * j, i_ + 2, j, -sigma)
+                    AddMat(i_ + (Nx + 1) * j, i_ - 1, j, -3 * sigma)
+                    AddMat(i_ + (Nx + 1) * j, i_, j, 9 * sigma)
+                    AddMat(i_ + (Nx + 1) * j, i_ + 1, j, -9 * sigma)
+                    AddMat(i_ + (Nx + 1) * j, i_ + 2, j, 3 * sigma)
+                    AddMat(i_ + 1 + (Nx + 1) * j, i_ - 1, j, 3 * sigma)
+                    AddMat(i_ + 1 + (Nx + 1) * j, i_, j, -9 * sigma)
+                    AddMat(i_ + 1 + (Nx + 1) * j, i_ + 1, j, 9 * sigma)
+                    AddMat(i_ + 1 + (Nx + 1) * j, i_ + 2, j, -3 * sigma)
+                    AddMat(i_ + 2 + (Nx + 1) * j, i_ - 1, j, -sigma)
+                    AddMat(i_ + 2 + (Nx + 1) * j, i_, j, 3 * sigma)
+                    AddMat(i_ + 2 + (Nx + 1) * j, i_ + 1, j, -3 * sigma)
+                    AddMat(i_ + 2 + (Nx + 1) * j, i_ + 2, j, sigma)
 
             indy = ind[1 : Ny + 1, :] - ind[0:Ny, :]
             J, I = np.where((indy == 1) | (indy == -1))
             for k in range(np.shape(I)[0]):
                 if indy[J[k], I[k]] == 1:
-                    i, jj = I[k], J[k] + 1
+                    i, j = I[k], J[k] + 1
+                    j_ = j
                 else:
-                    i, jj = I[k], J[k]
+                    i, j = I[k], J[k]
+                    j_ = j - 1
                 if (
-                    ind[jj - 1, i] == 0
-                    and ind[jj, i] == 1
-                    and ind[jj + 1, i] == 1
-                    and ind[jj + 2, i] == 1
+                    ind[j_ - 1, i] == 0
+                    and ind[j_, i] == 1
+                    and ind[j_ + 1, i] == 1
+                    and ind[j_ + 2, i] == 1
                 ) or (
-                    ind[jj - 1, i] == 1
-                    and ind[jj, i] == 1
-                    and ind[jj + 1, i] == 1
-                    and ind[jj + 2, i] == 0
+                    ind[j_ - 1, i] == 1
+                    and ind[j_, i] == 1
+                    and ind[j_ + 1, i] == 1
+                    and ind[j_ + 2, i] == 0
                 ):
-                    AddMat(rav(i, jj - 1), i, jj - 1, 1.0)
-                    AddMat(rav(i, jj - 1), i, jj, -3.0)
-                    AddMat(rav(i, jj - 1), i, jj + 1, 3.0)
-                    AddMat(rav(i, jj - 1), i, jj + 2, -1.0)
-                    AddMat(rav(i, jj), i, jj - 1, -3.0)
-                    AddMat(rav(i, jj), i, jj, 9.0)
-                    AddMat(rav(i, jj), i, jj + 1, -9.0)
-                    AddMat(rav(i, jj), i, jj + 2, 3.0)
-                    AddMat(rav(i, jj + 1), i, jj - 1, 3.0)
-                    AddMat(rav(i, jj + 1), i, jj, -9.0)
-                    AddMat(rav(i, jj + 1), i, jj + 1, 9.0)
-                    AddMat(rav(i, jj + 1), i, jj + 2, -3.0)
-                    AddMat(rav(i, jj + 2), i, jj - 1, -1.0)
-                    AddMat(rav(i, jj + 2), i, jj, 3.0)
-                    AddMat(rav(i, jj + 2), i, jj + 1, -3.0)
-                    AddMat(rav(i, jj + 2), i, jj + 2, 1.0)
+                    AddMat(i + (Nx + 1) * (j_ - 1), i, j_ - 1, sigma)
+                    AddMat(i + (Nx + 1) * (j_ - 1), i, j_, -3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ - 1), i, j_ + 1, 3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ - 1), i, j_ + 2, -sigma)
+                    AddMat(i + (Nx + 1) * j_, i, j_ - 1, -3 * sigma)
+                    AddMat(i + (Nx + 1) * j_, i, j_, 9 * sigma)
+                    AddMat(i + (Nx + 1) * j_, i, j_ + 1, -9 * sigma)
+                    AddMat(i + (Nx + 1) * j_, i, j_ + 2, 3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 1), i, j_ - 1, 3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 1), i, j_, -9 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 1), i, j_ + 1, 9 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 1), i, j_ + 2, -3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 2), i, j_ - 1, -sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 2), i, j_, 3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 2), i, j_ + 1, -3 * sigma)
+                    AddMat(i + (Nx + 1) * (j_ + 2), i, j_ + 2, sigma)
 
             # penalistion of the boundary condition
-            npcoef = np.array(coef) * (sigma / hx / hy)
+            npcoef = 1.0 / (hx**2) * np.array(coef)
             C = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
 
             # penalization outside
@@ -666,11 +666,13 @@ else:
     np.save("full_res_without_cond_phiFD2.npy", full_results_array_2)
 print(f"{full_results_array_2.shape=}")
 
+# Gamma = [0.001, 0.01, 0.1, 1.0, 10.0, 20.0]
+# Sigma = [0.001, 0.01, 0.1, 1.0, 5.0, 10.0, 20.0]
 
 index_sigma_1 = 1
 index_gamma_1 = 3
 index_sigma_2 = 1
-index_gamma_2 = 4
+index_gamma_2 = 3
 
 if conditioning == True:
     plt.figure(figsize=(18, 12))

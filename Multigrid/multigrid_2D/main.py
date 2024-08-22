@@ -14,6 +14,7 @@ sns.set_context("paper")
 
 pp = print
 plt_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+cmap = sns.color_palette()
 
 
 def confidence_ellipse(x, y, ax, facecolor="none", **kwargs):
@@ -45,13 +46,11 @@ def go_creation():
     N_final = 2200
     Ns = [
         1000,
-        1100,
         1200,
         1400,
         1600,
         1800,
         2000,
-        2200,
     ]
     N_multigrid = [
         400,
@@ -63,12 +62,12 @@ def go_creation():
         1000,
     ]
 
-    test_cases = ["ellipsis_cos"]  # ["circle_cos", "ellipsis_cos", "ellipsis_cos_exp"]
+    test_cases = ["circle_cos"]  # ["circle_cos", "ellipsis_cos", "ellipsis_cos_exp"]
     for test_case in test_cases:
 
         print(f"Test case : {test_case}")
         if not os.path.exists(f"./results_{test_case}/list_L2_direct_{test_case}.npy"):
-            force_new_data = True
+            # force_new_data = True
 
             if not os.path.exists(f"./results_{test_case}"):
                 os.makedirs(f"./results_{test_case}")
@@ -87,7 +86,7 @@ def go_creation():
         if not os.path.exists(
             f"./results_{test_case}/list_L2_iterative_{test_case}.npy"
         ):
-            force_new_data = True
+            # force_new_data = True
 
             if not os.path.exists(f"./results_{test_case}"):
                 os.makedirs(f"./results_{test_case}")
@@ -118,7 +117,7 @@ def go_creation():
             f"./results_{test_case}/list_times_iterative_{test_case}.npy"
         )
 
-        for explicit_expression in [True, False]:
+        for explicit_expression in [False]:
             list_xs_L2, list_xs_Loo, list_ys = [], [], []
             index = 0
             for N in N_multigrid:
@@ -215,18 +214,23 @@ def go_creation():
                     list_ys,
                 )
         fig, (ax0) = plt.subplots(1, 1, figsize=(10, 10))
-        ax0.set_title("Time VS $L_2$ error", fontsize=20)
+        # ax0.set_title("Time VS $L_2$ error", fontsize=20)
         for ax in [ax0]:
             ax.set_xscale("log")
             ax.set_yscale("log")
-            ax.set_xlabel("Error", fontsize=16)
+            ax.set_xlabel(r"$L^2$ relative error", fontsize=16)
             ax.set_ylabel("Computation time (s)", fontsize=16)
 
         ax0.plot(
-            L2_direct, times_direct, "-o", markersize=4, label=f"Direct"
+            L2_direct, times_direct, "-o", markersize=4, label=f"Direct", c=cmap[0]
         )  #  "o-", c="gray",
         ax0.plot(
-            L2_iterative, times_iterative, "-+", markersize=8, label=f"Iterative"
+            L2_iterative,
+            times_iterative,
+            "-+",
+            markersize=8,
+            label=f"Iterative",
+            c=cmap[1],
         )  # "*--", c="k",
         if os.path.exists(
             f"./results_{test_case}/list_times_multigrid_interpolate_phi_{test_case}.npy"
@@ -245,46 +249,47 @@ def go_creation():
                 times,
                 "-d",
                 markersize=8,
+                c=cmap[2],
                 # "x--",
                 # color="r",
-                label=r"Multigrid interpolate $\phi$ and $b$",
+                label=r"Multigrid",
             )
 
-        if os.path.exists(
-            f"./results_{test_case}/list_times_multigrid_explicit_expression_{test_case}.npy"
-        ):
-            L2_error = np.load(
-                f"./results_{test_case}/list_L2_multigrid_explicit_expression_{test_case}.npy"
-            )
-            Loo_error = np.load(
-                f"./results_{test_case}/list_Loo_multigrid_explicit_expression_{test_case}.npy"
-            )
-            times = np.load(
-                f"./results_{test_case}/list_times_multigrid_explicit_expression_{test_case}.npy"
-            )
-            ax0.plot(
-                L2_error,
-                times,
-                "-x",
-                markersize=8,
-                # "x--",
-                # color="r",
-                label=r"Multigrid explicit expressions",
-            )
+        # if os.path.exists(
+        #     f"./results_{test_case}/list_times_multigrid_explicit_expression_{test_case}.npy"
+        # ):
+        #     L2_error = np.load(
+        #         f"./results_{test_case}/list_L2_multigrid_explicit_expression_{test_case}.npy"
+        #     )
+        #     Loo_error = np.load(
+        #         f"./results_{test_case}/list_Loo_multigrid_explicit_expression_{test_case}.npy"
+        #     )
+        #     times = np.load(
+        #         f"./results_{test_case}/list_times_multigrid_explicit_expression_{test_case}.npy"
+        #     )
+        #     ax0.plot(
+        #         L2_error,
+        #         times,
+        #         "-x",
+        #         markersize=8,
+        #         # "x--",
+        #         # color="r",
+        #         label=r"Multigrid explicit expressions",
+        #     )
         for i, label in enumerate(N_multigrid):
             ax0.text(
                 L2_error[i],
-                times[i],
-                f"N={label}",
-                horizontalalignment="left",
-                verticalalignment="bottom",
+                times[i] - 0.5,
+                f"$N_0$={label}",
+                horizontalalignment="center",
+                verticalalignment="top",
                 fontsize=14,
             )
         for i, label in enumerate(Ns):
             ax0.text(
                 L2_direct[i],
                 times_direct[i],
-                f"N={label}",
+                f"$N_0$={label}",
                 horizontalalignment="left",
                 verticalalignment="bottom",
                 fontsize=14,
@@ -292,7 +297,7 @@ def go_creation():
             ax0.text(
                 L2_iterative[i],
                 times_iterative[i],
-                f"N={label}",
+                f"$N_0$={label}",
                 horizontalalignment="left",
                 verticalalignment="bottom",
                 fontsize=14,

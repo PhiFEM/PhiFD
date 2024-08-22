@@ -24,7 +24,7 @@ R_z = 0.3
 
 # Polynome Pk
 polV = 1
-polPhi = polV + 1
+polPhi = polV + 2
 # parameters["form_compiler"]["quadrature_degree"]=2*(polV+polPhi)
 
 # Ghost penalty
@@ -608,6 +608,266 @@ error_H1int_phifem_vec = np.load("error_H1int_phifem_vec.npy")
 
 ###########################################
 ############  beginning PhiFD  ############
+############        S-W        ############
+###########################################
+
+# Initialistion of the output
+interp_errors = np.zeros(Iter)
+size_mesh_diff_SW_vec = np.zeros(Iter)
+error_L2_diff_SW_vec = np.zeros(Iter)
+error_Linf_diff_SW_vec = np.zeros(Iter)
+error_H1_diff_SW_vec = np.zeros(Iter)
+error_H1int_diff_SW_vec = np.zeros(Iter)
+cond_diff_SW_vec = np.zeros(Iter)
+time_diff_SW_vec = np.zeros(Iter)
+for iii in range(Iter):
+    print("######################")
+    print("## Iteration diff SW ", iii + 1, "##")
+    print("######################")
+
+    # begin time
+    t_init = time()
+
+    # Construction of the mesh
+    N = sizes[iii]
+    print("N=", N)
+    Nx = N
+    Ny = N
+    Nz = N
+    x = np.linspace(0.0, 1.0, Nx + 1)
+    y = np.linspace(0.0, 1.0, Ny + 1)
+    z = np.linspace(0.0, 1.0, Nz + 1)
+    ue = sympy.lambdify([x_symb, y_symb, z_symb], u1)
+    f = sympy.lambdify([x_symb, y_symb, z_symb], f1)
+    phi = (
+        lambda x, y, z: -1.0
+        + ((x - 0.5) / R_x) ** 2
+        + ((y - 0.5) / R_y) ** 2
+        + ((z - 0.5) / R_z) ** 2
+    )
+
+    Ndof = (Nx + 1) * (Ny + 1) * (Nz + 1)
+    hx = x[1] - x[0]
+    hy = y[1] - y[0]
+    hz = z[1] - z[0]
+    X, Y, Z = np.meshgrid(x, y, z)  # 3D meshgrid
+    phijik = phi(X, Y, Z)
+    ind = (phijik < 0) + 0
+    mask = sp.diags(diagonals=ind.ravel())
+    indOut = 1 - ind
+
+    # laplacian matrix
+    D2x = (1.0 / hx / hx) * sp.diags(
+        diagonals=[-1, 2, -1], offsets=[-1, 0, 1], shape=(Nx + 1, Nx + 1)
+    )
+    D2y = (1.0 / hy / hy) * sp.diags(
+        diagonals=[-1, 2, -1], offsets=[-1, 0, 1], shape=(Ny + 1, Ny + 1)
+    )
+    D2z = (1.0 / hz / hz) * sp.diags(
+        diagonals=[-1, 2, -1], offsets=[-1, 0, 1], shape=(Nz + 1, Nz + 1)
+    )
+
+    D2x_2d = sp.kron(sp.kron(sp.eye(Ny + 1), D2x), sp.eye(Nz + 1))
+    D2y_2d = sp.kron(sp.kron(D2y, sp.eye(Nx + 1)), sp.eye(Nz + 1))
+    D2z_2d = sp.kron(sp.kron(sp.eye(Ny + 1), sp.eye(Nx + 1)), D2z)
+
+    A = mask @ (D2x_2d + D2y_2d + D2z_2d)
+    row = []
+    col = []
+    coef = []  # for the matrix implementing BC
+
+    def rav(i, j, k):
+        return np.ravel_multi_index([j, i, k], (Ny + 1, Nx + 1, Nz + 1))
+
+    def AddMat(eq, i, j, k, a):
+        row.append(eq)
+        col.append(rav(i, j, k))
+        coef.append(a)
+
+    indx = ind[:, 1 : Nx + 1, :] - ind[:, 0:Nx, :]
+    J, I, K = np.where((indx == 1) | (indx == -1))
+    for k in range(np.shape(I)[0]):
+        if indx[J[k], I[k], K[k]] == 1:
+            i = I[k] + 1
+            j = J[k]
+            k_ = K[k]
+            hminus = hx / (1 - phijik[j, i - 1, k_] / phijik[j, i, k_])
+            hplus = hx
+        else:
+            i = I[k]
+            j = J[k]
+            k_ = K[k]
+            hminus = hx
+            hplus = hx / (1 - phijik[j, i + 1, k_] / phijik[j, i, k_])
+
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j,
+            k_,
+            -2 / hx / hx + 2 / hplus / hminus,
+        )
+        AddMat(
+            rav(i, j, k_),
+            i + 1,
+            j,
+            k_,
+            1 / hx / hx - 2 / hplus / (hplus + hminus),
+        )
+        AddMat(
+            rav(i, j, k_),
+            i - 1,
+            j,
+            k_,
+            1 / hx / hx - 2 / hminus / (hplus + hminus),
+        )
+    indy = ind[1 : Ny + 1, :, :] - ind[0:Ny, :, :]
+    J, I, K = np.where((indy == 1) | (indy == -1))
+    for k in range(np.shape(I)[0]):
+        if indy[J[k], I[k], K[k]] == 1:
+            i = I[k]
+            j = J[k] + 1
+            k_ = K[k]
+            hminus = hy / (1 - phijik[j - 1, i, k_] / phijik[j, i, k_])
+            hplus = hy
+        else:
+            i = I[k]
+            j = J[k]
+            k_ = K[k]
+            hminus = hy
+            hplus = hy / (1 - phijik[j + 1, i, k_] / phijik[j, i, k_])
+
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j,
+            k_,
+            -2 / hy / hy + 2 / hplus / hminus,
+        )
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j + 1,
+            k_,
+            1 / hy / hy - 2 / hplus / (hplus + hminus),
+        )
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j - 1,
+            k_,
+            1 / hy / hy - 2 / hminus / (hplus + hminus),
+        )
+
+    indz = ind[:, :, 1 : Nz + 1] - ind[:, :, 0:Nz]
+    J, I, K = np.where((indz == 1) | (indz == -1))
+    for k in range(np.shape(I)[0]):
+        if indz[J[k], I[k], K[k]] == 1:
+            i = I[k]
+            j = J[k]
+            k_ = K[k] + 1
+            hminus = hz / (1 - phijik[j, i, k_ - 1] / phijik[j, i, k_])
+            hplus = hz
+        else:
+            i = I[k]
+            j = J[k]
+            k_ = K[k]
+            hminus = hz
+            hplus = hz / (1 - phijik[j, i, k_ + 1] / phijik[j, i, k_])
+
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j,
+            k_,
+            -2 / hz / hz + 2 / hplus / hminus,
+        )
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j,
+            k_ + 1,
+            1 / hz / hz - 2 / hplus / (hplus + hminus),
+        )
+        AddMat(
+            rav(i, j, k_),
+            i,
+            j,
+            k_ - 1,
+            1 / hz / hz - 2 / hminus / (hplus + hminus),
+        )
+
+    npcoef = np.array(coef)
+    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+
+    # penalization outside
+    D = sp.diags(diagonals=indOut.ravel())
+
+    # linear system
+    A = (A + B + D).tocsr()
+    b = f(X, Y, Z)
+    b = (ind * b).ravel()
+    u = spsolve(A, b).reshape(Ny + 1, Nx + 1, Nz + 1)
+    # final time
+    t_final = time()
+    uref = ue(X, Y, Z)
+    e = u - uref
+
+    eL2 = np.sqrt(np.sum(e * e * ind)) / np.sqrt(np.sum(uref * uref * ind))
+    emax = np.max(np.abs(e * ind)) / np.max(np.abs(uref * ind))
+    ex = (e[:, 1 : Nx + 1, :] - e[:, 0:Nx, :]) / hx
+    urefx = (uref[:, 1 : Nx + 1, :] - uref[:, 0:Nx, :]) / hx
+    intdx = (ind[:, 1 : Nx + 1, :] + ind[:, 0:Nx, :] == 2) + 0
+    fulldx = (ind[:, 1 : Nx + 1, :] + ind[:, 0:Nx, :] > 0) + 0
+
+    ey = (e[1 : Ny + 1, :, :] - e[0:Ny, :, :]) / hy
+    urefy = (uref[1 : Ny + 1, :, :] - uref[0:Ny, :, :]) / hy
+    intdy = (ind[1 : Ny + 1, :, :] + ind[0:Ny, :, :] == 2) + 0
+    fulldy = (ind[1 : Ny + 1, :, :] + ind[0:Ny, :, :] > 0) + 0
+
+    ez = (e[:, :, 1 : Nz + 1] - e[:, :, 0:Nz]) / hz
+    urefz = (uref[:, :, 1 : Nz + 1] - uref[:, :, 0:Nz]) / hz
+    intdz = (ind[:, :, 1 : Nz + 1] + ind[:, :, 0:Nz] == 2) + 0
+    fulldz = (ind[:, :, 1 : Nz + 1] + ind[:, :, 0:Nz] > 0) + 0
+
+    eH1 = np.sqrt(
+        (np.sum(ex * ex * fulldx) + np.sum(ey * ey * fulldy) + np.sum(ez * ez * fulldz))
+    ) / np.sqrt(
+        (
+            np.sum(urefx * urefx * fulldx)
+            + np.sum(urefy * urefy * fulldy)
+            + np.sum(urefz * urefz * fulldz)
+        )
+    )
+    eH1int = np.sqrt(
+        (np.sum(ex * ex * intdx) + np.sum(ey * ey * intdy) + np.sum(ez * ez * intdz))
+    ) / np.sqrt(
+        (
+            np.sum(urefx * urefx * intdx)
+            + np.sum(urefy * urefy * intdy)
+            + np.sum(urefz * urefz * intdz)
+        )
+    )
+
+    print("h :", np.sqrt(2) / N)
+    print("relative L2 error diff : ", eL2)
+    print("relative L inf error diff : ", emax)
+    print("relative H1 error diff : ", eH1)
+    print("relative H1 error diff int : ", eH1int)
+    print("time : ", t_final - t_init)
+    if conditioning == True:
+        cond = np.linalg.cond(A.todense())
+        cond_diff_SW_vec[iii] = cond
+        print("conditioning number diff : ", cond)
+    time_diff_SW_vec[iii] = t_final - t_init
+    error_L2_diff_SW_vec[iii] = eL2
+    error_Linf_diff_SW_vec[iii] = emax
+    error_H1_diff_SW_vec[iii] = eH1
+    error_H1int_diff_SW_vec[iii] = eH1int
+    size_mesh_diff_SW_vec[iii] = np.sqrt(2) / N
+
+###########################################
+############  beginning PhiFD  ############
 ############   First  scheme   ############
 ###########################################
 sigma = 0.01
@@ -1172,6 +1432,7 @@ plt.loglog(size_mesh_standard_vec, error_L2_standard_vec, "-+", label="L2 std")
 plt.loglog(size_mesh_phi_vec, error_L2_phifem_vec, "-+", label="L2 phiFEM")
 plt.loglog(size_mesh_phi_vec, error_L2_diff_vec, "-+", label="L2 phiFD")
 plt.loglog(size_mesh_phi_vec, error_L2_diff2_vec, "-+", label="L2 phiFD2")
+plt.loglog(size_mesh_phi_vec, error_L2_diff_SW_vec, "-+", label="L2 SW")
 plt.loglog(
     size_mesh_phi_vec,
     [h**2 for h in size_mesh_phi_vec],
@@ -1185,6 +1446,8 @@ plt.loglog(size_mesh_standard_vec, error_Linf_standard_vec, "-+", label="Linf st
 plt.loglog(size_mesh_phi_vec, error_Linf_phifem_vec, "-+", label="Linf phiFEM")
 plt.loglog(size_mesh_phi_vec, error_Linf_diff_vec, "-+", label="Linf phiFD")
 plt.loglog(size_mesh_phi_vec, error_Linf_diff2_vec, "-+", label="Linf phiFD2")
+plt.loglog(size_mesh_phi_vec, error_Linf_diff_SW_vec, "-+", label="Linf SW")
+
 plt.loglog(
     size_mesh_phi_vec, [h for h in size_mesh_phi_vec], "--", label=r"$\mathcal{O}(h)$"
 )
@@ -1201,6 +1464,7 @@ plt.loglog(size_mesh_standard_vec, error_H1int_standard_vec, "-+", label="H1 std
 plt.loglog(size_mesh_phi_vec, error_H1int_phifem_vec, "-+", label="H1 phiFEM")
 plt.loglog(size_mesh_phi_vec, error_H1int_diff_vec, "-+", label="H1 phiFD")
 plt.loglog(size_mesh_phi_vec, error_H1int_diff2_vec, "-+", label="H1 phiFD2")
+plt.loglog(size_mesh_phi_vec, error_H1int_diff_SW_vec, "-+", label="H1 SW")
 plt.loglog(
     size_mesh_phi_vec, [h for h in size_mesh_phi_vec], "--", label=r"$\mathcal{O}(h)$"
 )
@@ -1232,6 +1496,9 @@ order_H1int_diff = order(size_mesh_diff_vec, error_H1int_diff_vec)
 order_L2_diff2 = order(size_mesh_diff2_vec, error_L2_diff2_vec)
 order_Linf_diff2 = order(size_mesh_diff2_vec, error_Linf_diff2_vec)
 order_H1int_diff2 = order(size_mesh_diff2_vec, error_H1int_diff2_vec)
+order_L2_diff_SW = order(size_mesh_diff_SW_vec, error_L2_diff_SW_vec)
+order_Linf_diff_SW = order(size_mesh_diff_SW_vec, error_Linf_diff_SW_vec)
+order_H1int_diff_SW = order(size_mesh_diff_SW_vec, error_H1int_diff_SW_vec)
 
 
 print("Order conv rel L2 error phifem : ", order_L2_phifem)
@@ -1250,6 +1517,10 @@ print("Order conv rel L2 error diff 2 : ", order_L2_diff2)
 print("Order conv rel Linf error diff 2 : ", order_Linf_diff2)
 print("Order conv rel H1 error diff 2 : ", order_H1int_diff2)
 
+print("Order conv rel L2 error diff SW : ", order_L2_diff_SW)
+print("Order conv rel Linf error diff SW : ", order_Linf_diff_SW)
+print("Order conv rel H1 error diff SW : ", order_H1int_diff_SW)
+
 #  Write the output file for latex
 if conditioning == False:
     f = open("output_no_cond_case1_phiDF.txt", "w")
@@ -1261,6 +1532,8 @@ f.write("\\addplot[mark=*, blue] coordinates {\n")
 output_latex(f, size_mesh_phi_vec, error_L2_phifem_vec)
 f.write("};\n\\addplot[mark=*] coordinates {\n")
 output_latex(f, size_mesh_standard_vec, error_L2_standard_vec)
+f.write("};\n\\addplot[mark=*, green] coordinates {\n")
+output_latex(f, size_mesh_phi_vec, error_L2_diff_SW_vec)
 f.write("};\n\\addplot[mark=*,red] coordinates {\n")
 output_latex(f, size_mesh_phi_vec, error_L2_diff_vec)
 f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
@@ -1273,6 +1546,8 @@ f.write("\\addplot[mark=*, blue] coordinates {\n")
 output_latex(f, size_mesh_phi_vec, error_Linf_phifem_vec)
 f.write("};\n\\addplot[mark=*] coordinates {\n")
 output_latex(f, size_mesh_standard_vec, error_Linf_standard_vec)
+f.write("};\n\\addplot[mark=*, green] coordinates {\n")
+output_latex(f, size_mesh_phi_vec, error_Linf_diff_SW_vec)
 f.write("};\n\\addplot[mark=*,red] coordinates {\n")
 output_latex(f, size_mesh_phi_vec, error_Linf_diff_vec)
 f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
@@ -1287,6 +1562,8 @@ f.write("\\addplot[mark=*, blue] coordinates {\n")
 output_latex(f, size_mesh_phi_vec, error_H1int_phifem_vec)
 f.write("};\n\\addplot[mark=*] coordinates {\n")
 output_latex(f, size_mesh_standard_vec, error_H1int_standard_vec)
+f.write("};\n\\addplot[mark=*, green] coordinates {\n")
+output_latex(f, size_mesh_phi_vec, error_H1int_diff_SW_vec)
 f.write("};\n\\addplot[mark=*,red] coordinates {\n")
 output_latex(f, size_mesh_phi_vec, error_H1int_diff_vec)
 f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
@@ -1301,6 +1578,8 @@ f.write("\\addplot[mark=*, blue] coordinates {\n")
 output_latex(f, error_L2_phifem_vec, time_phifem_vec)
 f.write("};\n\\addplot[mark=*] coordinates {\n")
 output_latex(f, error_L2_standard_vec, time_standard_vec)
+f.write("};\n\\addplot[mark=*, green] coordinates {\n")
+output_latex(f, error_L2_diff_SW_vec, time_diff_SW_vec)
 f.write("};\n\\addplot[mark=*,red] coordinates {\n")
 output_latex(f, error_L2_diff_vec, time_diff_vec)
 f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
@@ -1312,6 +1591,8 @@ f.write("\\addplot[mark=*, blue] coordinates {\n")
 output_latex(f, error_Linf_phifem_vec, time_phifem_vec)
 f.write("};\n\\addplot[mark=*] coordinates {\n")
 output_latex(f, error_Linf_standard_vec, time_standard_vec)
+f.write("};\n\\addplot[mark=*, green] coordinates {\n")
+output_latex(f, error_Linf_diff_SW_vec, time_diff_SW_vec)
 f.write("};\n\\addplot[mark=*,red] coordinates {\n")
 output_latex(f, error_Linf_diff_vec, time_diff_vec)
 f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
@@ -1325,6 +1606,8 @@ f.write("\\addplot[mark=*, blue] coordinates {\n")
 output_latex(f, error_H1int_phifem_vec, time_phifem_vec)
 f.write("};\n\\addplot[mark=*] coordinates {\n")
 output_latex(f, error_H1int_standard_vec, time_standard_vec)
+f.write("};\n\\addplot[mark=*, green] coordinates {\n")
+output_latex(f, error_H1int_diff_SW_vec, time_diff_SW_vec)
 f.write("};\n\\addplot[mark=*,red] coordinates {\n")
 output_latex(f, error_H1int_diff_vec, time_diff_vec)
 f.write("};\n\\addplot[mark=*,orange] coordinates {\n")

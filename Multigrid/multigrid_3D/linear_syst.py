@@ -16,13 +16,12 @@ def linear_direct(A, b):
 
 
 class Iterative_info:
-    def __init__(self, r_tol, error_fn, maxiter, error_L2):
+    def __init__(self, r_tol, error_fn, maxiter):
         self.status = "scipy_stop"
         self.u = None
         self.end = time.time()
         self.iter = 0
         self.error_fn = error_fn
-        # self.error_L2 = error_L2
         self.r_tol = r_tol
         self.maxiter = maxiter
         self.residues = []
@@ -40,7 +39,6 @@ class Iterative_info:
             self.best_u = self.u
             self.end = end
             self.final_iter = self.iter
-        # self.errors.append(self.error_L2(u))
 
         if residuals < self.r_tol:
             self.status = "error_max_stop"

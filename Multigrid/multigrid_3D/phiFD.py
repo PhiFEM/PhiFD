@@ -48,6 +48,29 @@ def problem_with_solution(case, compute_std_fem=False):
             + sympy.diff(sympy.diff(u1, y_symb), y_symb)
             + sympy.diff(sympy.diff(u1, z_symb), z_symb)
         )
+    elif case == "ellipsoid_cos_sin":
+        R_x = 0.28
+        R_y = 0.32
+        R_z = 0.35
+        phi = (
+            lambda x, y, z: ((x - 0.5) / R_x) ** 2
+            + ((y - 0.5) / R_y) ** 2
+            + ((z - 0.5) / R_z) ** 2
+            - 1.0
+        )
+        r = sympy.sqrt(
+            ((x_symb - 0.5) * (x_symb - 0.5) / (R_x**2))
+            + (((y_symb - 0.5) * (y_symb - 0.5)) / (R_y**2))
+            + (((z_symb - 0.5) * (z_symb - 0.5)) / (R_z**2))
+            + 1e-12
+        )
+        K = sympy.pi / 2.0
+        u1 = sympy.cos(K * r)  # * sympy.sin(x_symb)
+        f1 = -(
+            sympy.diff(sympy.diff(u1, x_symb), x_symb)
+            + sympy.diff(sympy.diff(u1, y_symb), y_symb)
+            + sympy.diff(sympy.diff(u1, z_symb), z_symb)
+        )
 
     else:
         raise Exception(f"unknown case:{case}")
