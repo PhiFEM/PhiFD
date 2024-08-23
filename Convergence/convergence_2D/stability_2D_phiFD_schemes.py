@@ -25,7 +25,7 @@ conditioning = True
 
 # Number of iterations
 init_Iter = 1
-Iter = 3 if conditioning else 6
+Iter = 4 if conditioning else 6
 
 # Polynome Pk
 polV = 1

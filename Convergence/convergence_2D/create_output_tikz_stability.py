@@ -36,8 +36,8 @@ Cond_fixed_sigma_2 = res_phiFD2[-1, :, :, index_sigma_2]
 Cond_fixed_gamma_2 = res_phiFD2[-1, :, index_gamma_2, :]
 
 
-markers = ["*", "x", "+"]
-colors = ["darkviolet", "cardinal", "ForestGreen"]
+markers = ["*", "x", "+", "triangle"]
+colors = ["darkviolet", "cardinal", "ForestGreen", "coral"]
 
 f = open(f"output_stability.txt", "w")
 f.write("\\begin{tikzpicture}")
@@ -45,30 +45,34 @@ f.write(
     "\\begin{loglogaxis}[name = ax1, width = .45\\textwidth, ylabel = $L^2$ relative error,\n"
     + "xlabel = $\\sigma$,\n"
     + "legend style = {at={(1,1)},anchor=south east, legend columns =2,\n"
-    + " /tikz/column 2/.style={column sep = 10pt}}]\n",
+    + " /tikz/column 2/.style={column sep = 10pt},\n "
+    + " /tikz/column 4/.style={column sep = 10pt},\n "
+    + " /tikz/column 6/.style={column sep = 10pt}}]\n",
 )
 
 for i, h in enumerate(sizes):
     f.write(f"\\addplot[mark={markers[i]}, {colors[i]}] coordinates " + "{\n")
     output_latex(f, Sigma, L2_error_fixed_gamma[i])
     f.write("};\n\n")
-    f.write(f"\\addlegendentry" + r"{$\phi$-FD $h=$" + f"{sizes[i]:.2f}" + "}\n")
+    # f.write(f"\\addlegendentry" + r"{$\phi$-FD $h=$" + f"{sizes[i]:.2f}" + "}\n")
     f.write(
         f"\\addplot[mark={markers[i]}, {colors[i]}, densely dashed] coordinates "
         + "{\n"
     )
     output_latex(f, Sigma, L2_error_fixed_gamma_2[i])
     f.write("};\n\n")
-    f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
+    # f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
 f.write("\end{loglogaxis}\n")
-f.write("\end{tikzpicture}")
-f.write("\\quad")
-f.write("\\begin{tikzpicture}")
+# f.write("\end{tikzpicture}\n")
+# f.write("\\quad\n")
+# f.write("\\begin{tikzpicture}")
 f.write(
-    "\\begin{loglogaxis}[name = ax1, width = .45\\textwidth, ylabel = Condition number,\n"
+    "\\begin{loglogaxis}[name = ax2, at={(ax1.south east)}, xshift=2cm, width = .45\\textwidth, ylabel = Condition number,\n"
     + "xlabel = $\\sigma$,\n"
-    + "legend style = {at={(1,1)},anchor=south east, legend columns =2,\n"
-    + " /tikz/column 2/.style={column sep = 10pt}}]\n",
+    + "legend style = {at={(1,1.02)},anchor=south east, legend columns =4,\n"
+    + " /tikz/column 2/.style={column sep = 10pt},\n "
+    + " /tikz/column 4/.style={column sep = 10pt},\n "
+    + " /tikz/column 6/.style={column sep = 10pt}}]\n",
 )
 
 for i, h in enumerate(sizes):
@@ -84,51 +88,55 @@ for i, h in enumerate(sizes):
     f.write("};\n\n")
     f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
 f.write("\end{loglogaxis}\n")
-f.write("\end{tikzpicture}")
-f.write("\\\\")
-f.write("\\begin{tikzpicture}")
+# f.write("\end{tikzpicture}\n")
+# f.write("\\\\ ")
+# f.write("\\begin{tikzpicture}\n")
 f.write(
-    "\\begin{loglogaxis}[name = ax1, width = .45\\textwidth, ylabel = $L^2$ relative error,\n"
+    "\\begin{loglogaxis}[name = ax3, width = .45\\textwidth,yshift=-5.25cm, ylabel = $L^2$ relative error,\n"
     + "xlabel = $\\gamma$,\n"
     + "legend style = {at={(1,1)},anchor=south east, legend columns =2,\n"
-    + " /tikz/column 2/.style={column sep = 10pt}}]\n",
+    + " /tikz/column 2/.style={column sep = 10pt},\n "
+    + " /tikz/column 4/.style={column sep = 10pt},\n "
+    + " /tikz/column 6/.style={column sep = 10pt}}]\n",
 )
 
 for i, h in enumerate(sizes):
     f.write(f"\\addplot[mark={markers[i]}, {colors[i]}] coordinates " + "{\n")
     output_latex(f, Gamma, L2_error_fixed_sigma[i])
     f.write("};\n\n")
-    f.write(f"\\addlegendentry" + r"{$\phi$-FD $h=$" + f"{sizes[i]:.2f}" + "}\n")
+    # f.write(f"\\addlegendentry" + r"{$\phi$-FD $h=$" + f"{sizes[i]:.2f}" + "}\n")
     f.write(
         f"\\addplot[mark={markers[i]}, {colors[i]}, densely dashed] coordinates "
         + "{\n"
     )
     output_latex(f, Gamma, L2_error_fixed_sigma_2[i])
     f.write("};\n\n")
-    f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
+    # f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
 f.write("\end{loglogaxis}\n")
-f.write("\end{tikzpicture}")
-f.write("\\quad")
-f.write("\\begin{tikzpicture}")
+# f.write("\end{tikzpicture}\n")
+# f.write("\\quad\n")
+# f.write("\\begin{tikzpicture}")
 f.write(
-    "\\begin{loglogaxis}[name = ax1, width = .45\\textwidth, ylabel = Condition number,\n"
+    "\\begin{loglogaxis}[name = ax4, at={(ax3.south east)}, xshift=2cm, width = .45\\textwidth, ylabel = Condition number,\n"
     + "xlabel = $\\gamma$,\n"
-    + "legend style = {at={(1,1)},anchor=south east, legend columns =2,\n"
-    + " /tikz/column 2/.style={column sep = 10pt}}]\n",
+    + "legend style = {at={(1,1.02)},anchor=south east, legend columns =4,\n"
+    + " /tikz/column 2/.style={column sep = 10pt},\n "
+    + " /tikz/column 4/.style={column sep = 10pt},\n "
+    + " /tikz/column 6/.style={column sep = 10pt}}]\n",
 )
 
 for i, h in enumerate(sizes):
     f.write(f"\\addplot[mark={markers[i]}, {colors[i]}] coordinates " + "{\n")
     output_latex(f, Gamma, Cond_fixed_sigma[i])
     f.write("};\n\n")
-    f.write(f"\\addlegendentry" + r"{$\phi$-FD $h=$" + f"{sizes[i]:.2f}" + "}\n")
+    # f.write(f"\\addlegendentry" + r"{$\phi$-FD $h=$" + f"{sizes[i]:.2f}" + "}\n")
     f.write(
         f"\\addplot[mark={markers[i]}, {colors[i]}, densely dashed] coordinates "
         + "{\n"
     )
     output_latex(f, Gamma, Cond_fixed_sigma_2[i])
     f.write("};\n\n")
-    f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
+    # f.write(f"\\addlegendentry" + r"{$\phi$-FD2 $h=$" + f"{sizes[i]:.2f}" + "}\n")
 f.write("\end{loglogaxis}\n")
 f.write("\end{tikzpicture}")
 
