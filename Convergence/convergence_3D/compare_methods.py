@@ -24,7 +24,7 @@ R_z = 0.3
 
 # Polynome Pk
 polV = 1
-polPhi = polV + 2
+polPhi = polV + 1
 # parameters["form_compiler"]["quadrature_degree"]=2*(polV+polPhi)
 
 # Ghost penalty
@@ -162,7 +162,7 @@ else:
             .replace("xx", "x[0]")
             .replace("yy", "x[1]")
             .replace("zz", "x[2]"),
-            degree=polV,
+            degree=polV + 2,
             domain=mesh,
         )
         u_expr = df.Expression(
@@ -189,29 +189,20 @@ else:
         facet_ghost.set_all(0)
         cell_ghost.set_all(0)
         count_cell_ghost = 0
-        for mycell in df.cells(mesh):
-            for myfacet in df.facets(mycell):
-                v1, v2, v3 = df.vertices(myfacet)
+        for cell in df.cells(mesh):
+            for facet in df.facets(cell):
+                v1, v2, v3 = df.vertices(facet)
                 if (
-                    (
-                        phi(v1.point().x(), v1.point().y(), v1.point().z())
-                        * phi(v2.point().x(), v2.point().y(), v2.point().z())
-                        <= df.DOLFIN_EPS
-                    )
-                    or (
-                        phi(v1.point().x(), v1.point().y(), v1.point().z())
-                        * phi(v3.point().x(), v3.point().y(), v3.point().z())
-                        <= df.DOLFIN_EPS
-                    )
-                    or (
-                        phi(v2.point().x(), v2.point().y(), v2.point().z())
-                        * phi(v3.point().x(), v3.point().y(), v3.point().z())
-                        <= df.DOLFIN_EPS
-                    )
+                    phi(v1.point()) * phi(v2.point()) <= 0.0
+                    or phi(v1.point()) * phi(v3.point()) <= 0.0
+                    or phi(v2.point()) * phi(v3.point()) <= 0.0
+                    or df.near(phi(v1.point()) * phi(v2.point()), 0.0)
+                    or df.near(phi(v1.point()) * phi(v3.point()), 0.0)
+                    or df.near(phi(v2.point()) * phi(v3.point()), 0.0)
                 ):
-                    cell_ghost[mycell] = 1
-                    for myfacet2 in df.facets(mycell):
-                        facet_ghost[myfacet2] = 1
+                    cell_ghost[cell] = 1
+                    for facett in df.facets(cell):
+                        facet_ghost[facett] = 1
 
         for mycell in df.cells(mesh):
             if cell_ghost[mycell] == 1:
@@ -228,65 +219,47 @@ else:
         # Resolution
         n = df.FacetNormal(mesh)
         h = df.CellDiameter(mesh)
-        u = df.TrialFunction(V)
-        v = df.TestFunction(V)
-        if ghost == False:
-            a = (
-                df.inner(df.grad(phi * u), df.grad(phi * v)) * dx
-                - df.dot(df.inner(df.grad(phi * u), n), phi * v) * ds
-            )
-            L = (
-                f_expr * v * phi * dx
-                + df.inner(df.grad(-g), df.grad(phi * v)) * dx
-                - df.dot(df.inner(df.grad(-g), n), phi * v) * ds
-            )
-        if ghost == True:
-            a = (
-                df.inner(df.grad(phi * u), df.grad(phi * v)) * dx
-                - df.dot(df.inner(df.grad(phi * u), n), phi * v) * ds
-                + sigma
-                * df.avg(h)
-                * df.dot(df.jump(df.grad(phi * u), n), df.jump(df.grad(phi * v), n))
-                * dS(1)
-                + sigma
-                * h**2
-                * df.inner(
-                    phi * u + df.div(df.grad(phi * u)),
-                    phi * v + df.div(df.grad(phi * v)),
-                )
-                * dx(1)
-            )
-            L = (
-                f_expr * v * phi * dx
-                - sigma
-                * h**2
-                * df.inner(f_expr, phi * v + df.div(df.grad(phi * v)))
-                * dx(1)
-                + df.inner(df.grad(-g), df.grad(phi * v)) * dx
-                - df.dot(df.inner(df.grad(-g), n), phi * v) * ds
-                + sigma
-                * df.avg(h)
-                * df.dot(df.jump(df.grad(-g), n), df.jump(df.grad(phi * v), n))
-                * dS(1)
-                + sigma
-                * h**2
-                * df.inner(df.div(df.grad(-g)), phi * v + df.div(df.grad(phi * v)))
-                * dx(1)
-            )
+        w_h = df.TrialFunction(V)
+        v_h = df.TestFunction(V)
+        a = (
+            df.inner(df.grad(phi * w_h), df.grad(phi * v_h)) * dx
+            - df.inner(df.grad(phi * w_h), n) * phi * v_h * ds
+            + sigma
+            * df.avg(h)
+            * df.jump(df.grad(phi * w_h), n)
+            * df.jump(df.grad(phi * v_h), n)
+            * dS(1)
+            + sigma
+            * h**2
+            * df.div(df.grad(phi * w_h))
+            * df.div(df.grad(phi * v_h))
+            * dx(1)
+        )
+        L = (
+            f_expr * phi * v_h * dx
+            - sigma * h**2 * f_expr * df.div(df.grad(phi * v_h)) * dx(1)
+            - sigma * h**2 * df.div(df.grad(phi * v_h)) * df.div(df.grad(g)) * dx(1)
+            - df.inner(df.grad(g), df.grad(phi * v_h)) * dx
+            + df.inner(df.grad(g), n) * phi * v_h * ds
+            - sigma
+            * df.avg(h)
+            * df.jump(df.grad(g), n)
+            * df.jump(df.grad(phi * v_h), n)
+            * dS(1)
+        )
 
         # Define solution function
-        u_h = df.Function(V)
+        w = df.Function(V)
         print("ready to solve")
         df.solve(
             a == L,
-            u_h,
+            w,
             solver_parameters={"linear_solver": "gmres", "preconditioner": "hypre_amg"},
         )
 
-        sol = u_h * phi + g
+        sol = w * phi + g
         t_final = time()
         sol = df.project(sol, V)
-
         # computation of the error
         V_macro = df.FunctionSpace(mesh_macro, "CG", 1)
         sol2 = df.interpolate(sol, V_macro)
@@ -318,16 +291,13 @@ else:
 
         phijik = phi_np(X, Y, Z)
         ind = (phijik < 0) + 0
-        indOut = 1 - ind
         ue = sympy.lambdify([x_symb, y_symb, z_symb], u1)
         uref = ue(X, Y, Z)
 
         e = sol_values - uref
 
-        eL2 = np.sqrt(np.sum(e * e * (1 - indOut))) / np.sqrt(
-            np.sum(uref * uref * (1 - indOut))
-        )
-        emax = np.max(np.abs(e * (1 - indOut))) / np.max(np.abs(uref * (1 - indOut)))
+        eL2 = np.sqrt(np.sum(e * e * ind)) / np.sqrt(np.sum(uref * uref * ind))
+        emax = np.max(np.abs(e * ind)) / np.max(np.abs(uref * ind))
 
         ex = (e[:, 1 : Nx + 1, :] - e[:, 0:Nx, :]) / hx
         urefx = (uref[:, 1 : Nx + 1, :] - uref[:, 0:Nx, :]) / hx
@@ -438,7 +408,7 @@ else:
             .replace("xx", "x[0]")
             .replace("yy", "x[1]")
             .replace("zz", "x[2]"),
-            degree=polV,
+            degree=polV + 2,
             domain=mesh,
         )
         u_expr = df.Expression(
@@ -522,16 +492,13 @@ else:
                     sol_values[iy, ix, iz] = sol2(x[ix], y[iy], z[iz])
         phijik = phi(X, Y, Z)
         ind = (phijik < 0) + 0
-        indOut = 1 - ind
         ue = sympy.lambdify([x_symb, y_symb, z_symb], u1)
         uref = ue(X, Y, Z)
 
         e = sol_values - uref
 
-        eL2 = np.sqrt(np.sum(e * e * (1 - indOut))) / np.sqrt(
-            np.sum(uref * uref * (1 - indOut))
-        )
-        emax = np.max(np.abs(e * (1 - indOut))) / np.max(np.abs(uref * (1 - indOut)))
+        eL2 = np.sqrt(np.sum(e * e * ind)) / np.sqrt(np.sum(uref * uref * ind))
+        emax = np.max(np.abs(e * ind)) / np.max(np.abs(uref * ind))
 
         ex = (e[:, 1 : Nx + 1, :] - e[:, 0:Nx, :]) / hx
         urefx = (uref[:, 1 : Nx + 1, :] - uref[:, 0:Nx, :]) / hx
@@ -1523,137 +1490,147 @@ print("Order conv rel H1 error diff SW : ", order_H1int_diff_SW)
 
 #  Write the output file for latex
 if conditioning == False:
-    f = open("output_no_cond_case1_phiDF.txt", "w")
+    file = open("output_no_cond_case1_phiDF.txt", "w")
 if conditioning == True:
-    f = open("output_cond_case1_phiDF.txt", "w")
+    file = open("output_cond_case1_phiDF.txt", "w")
 
-f.write("relative L2 norm for phifem, FEM standard, phi-FD, phi-FD2: \n")
-f.write("\\addplot[mark=*, blue] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_L2_phifem_vec)
-f.write("};\n\\addplot[mark=*] coordinates {\n")
-output_latex(f, size_mesh_standard_vec, error_L2_standard_vec)
-f.write("};\n\\addplot[mark=*, green] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_L2_diff_SW_vec)
-f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_L2_diff_vec)
-f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_L2_diff2_vec)
-f.write("};\n\n")
-
-
-f.write("relative L infty norm for phifem, FEM standard, phi-FD, phi-FD2: \n")
-f.write("\\addplot[mark=*, blue] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_Linf_phifem_vec)
-f.write("};\n\\addplot[mark=*] coordinates {\n")
-output_latex(f, size_mesh_standard_vec, error_Linf_standard_vec)
-f.write("};\n\\addplot[mark=*, green] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_Linf_diff_SW_vec)
-f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_Linf_diff_vec)
-f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_Linf_diff2_vec)
-f.write("};\n\n")
+file.write("relative L2 norm for phifem, FEM standard, SW, phi-FD, phi-FD2: \n")
+file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+output_latex(file, size_mesh_phi_vec, error_L2_phifem_vec)
+file.write("};\n\\addplot[mark=*] coordinates {\n")
+output_latex(file, size_mesh_standard_vec, error_L2_standard_vec)
+file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+output_latex(file, size_mesh_diff_SW_vec, error_L2_diff_SW_vec)
+file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+output_latex(file, size_mesh_diff_vec, error_L2_diff_vec)
+file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+output_latex(file, size_mesh_diff2_vec, error_L2_diff2_vec)
+file.write("};\n\n")
 
 
-f.write(
-    "relative H1 norm in Omega_h^Gamma for phifem, FEM standard, phi-FD, phi-FD2: \n"
+file.write("relative L infty norm for phifem, FEM standard, SW, phi-FD, phi-FD2: \n")
+file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+output_latex(file, size_mesh_phi_vec, error_Linf_phifem_vec)
+file.write("};\n\\addplot[mark=*] coordinates {\n")
+output_latex(file, size_mesh_standard_vec, error_Linf_standard_vec)
+file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+output_latex(file, size_mesh_diff_SW_vec, error_Linf_diff_SW_vec)
+file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+output_latex(file, size_mesh_diff_vec, error_Linf_diff_vec)
+file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+output_latex(file, size_mesh_diff2_vec, error_Linf_diff2_vec)
+file.write("};\n\n")
+
+
+file.write(
+    "relative H1 norm in Omega_h^Gamma for phifem, FEM standard, SW, phi-FD, phi-FD2: \n"
 )
-f.write("\\addplot[mark=*, blue] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_H1int_phifem_vec)
-f.write("};\n\\addplot[mark=*] coordinates {\n")
-output_latex(f, size_mesh_standard_vec, error_H1int_standard_vec)
-f.write("};\n\\addplot[mark=*, green] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_H1int_diff_SW_vec)
-f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_H1int_diff_vec)
-f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-output_latex(f, size_mesh_phi_vec, error_H1int_diff2_vec)
-f.write("};\n\n")
+file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+output_latex(file, size_mesh_phi_vec, error_H1int_phifem_vec)
+file.write("};\n\\addplot[mark=*] coordinates {\n")
+output_latex(file, size_mesh_standard_vec, error_H1int_standard_vec)
+file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+output_latex(file, size_mesh_diff_SW_vec, error_H1int_diff_SW_vec)
+file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+output_latex(file, size_mesh_diff_vec, error_H1int_diff_vec)
+file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+output_latex(file, size_mesh_diff2_vec, error_H1int_diff2_vec)
+file.write("};\n\n")
 
 
-f.write(
-    "relative L2 norm and time standard for phifem, FEM standard, phi-FD, phi-FD2: \n"
+file.write(
+    "relative L2 norm and time standard for phifem, FEM standard, SW, phi-FD, phi-FD2: \n"
 )
-f.write("\\addplot[mark=*, blue] coordinates {\n")
-output_latex(f, error_L2_phifem_vec, time_phifem_vec)
-f.write("};\n\\addplot[mark=*] coordinates {\n")
-output_latex(f, error_L2_standard_vec, time_standard_vec)
-f.write("};\n\\addplot[mark=*, green] coordinates {\n")
-output_latex(f, error_L2_diff_SW_vec, time_diff_SW_vec)
-f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-output_latex(f, error_L2_diff_vec, time_diff_vec)
-f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-output_latex(f, error_L2_diff2_vec, time_diff2_vec)
-f.write("};\n\n")
+file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+output_latex(file, error_L2_phifem_vec, time_phifem_vec)
+file.write("};\n\\addplot[mark=*] coordinates {\n")
+output_latex(file, error_L2_standard_vec, time_standard_vec)
+file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+output_latex(file, error_L2_diff_SW_vec, time_diff_SW_vec)
+file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+output_latex(file, error_L2_diff_vec, time_diff_vec)
+file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+output_latex(file, error_L2_diff2_vec, time_diff2_vec)
+file.write("};\n\n")
 
-f.write("relative Linf norm and time for phifem, FEM standard, phi-FD, phi-FD2: \n")
-f.write("\\addplot[mark=*, blue] coordinates {\n")
-output_latex(f, error_Linf_phifem_vec, time_phifem_vec)
-f.write("};\n\\addplot[mark=*] coordinates {\n")
-output_latex(f, error_Linf_standard_vec, time_standard_vec)
-f.write("};\n\\addplot[mark=*, green] coordinates {\n")
-output_latex(f, error_Linf_diff_SW_vec, time_diff_SW_vec)
-f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-output_latex(f, error_Linf_diff_vec, time_diff_vec)
-f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-output_latex(f, error_Linf_diff2_vec, time_diff2_vec)
-f.write("};\n\n")
-
-f.write(
-    "relative H1 norm in Omega_h^Gamma and time for phifem, FEM standard, phi-FD, phi-FD2: \n"
+file.write(
+    "relative Linf norm and time for phifem, FEM standard, SW, phi-FD, phi-FD2: \n"
 )
-f.write("\\addplot[mark=*, blue] coordinates {\n")
-output_latex(f, error_H1int_phifem_vec, time_phifem_vec)
-f.write("};\n\\addplot[mark=*] coordinates {\n")
-output_latex(f, error_H1int_standard_vec, time_standard_vec)
-f.write("};\n\\addplot[mark=*, green] coordinates {\n")
-output_latex(f, error_H1int_diff_SW_vec, time_diff_SW_vec)
-f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-output_latex(f, error_H1int_diff_vec, time_diff_vec)
-f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-output_latex(f, error_H1int_diff2_vec, time_diff2_vec)
-f.write("};\n\n")
+file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+output_latex(file, error_Linf_phifem_vec, time_phifem_vec)
+file.write("};\n\\addplot[mark=*] coordinates {\n")
+output_latex(file, error_Linf_standard_vec, time_standard_vec)
+file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+output_latex(file, error_Linf_diff_SW_vec, time_diff_SW_vec)
+file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+output_latex(file, error_Linf_diff_vec, time_diff_vec)
+file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+output_latex(file, error_Linf_diff2_vec, time_diff2_vec)
+file.write("};\n\n")
+
+file.write(
+    "relative H1 norm in Omega_h^Gamma and time for phifem, FEM standard, SW, phi-FD, phi-FD2: \n"
+)
+file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+output_latex(file, error_H1int_phifem_vec, time_phifem_vec)
+file.write("};\n\\addplot[mark=*] coordinates {\n")
+output_latex(file, error_H1int_standard_vec, time_standard_vec)
+file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+output_latex(file, error_H1int_diff_SW_vec, time_diff_SW_vec)
+file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+output_latex(file, error_H1int_diff_vec, time_diff_vec)
+file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+output_latex(file, error_H1int_diff2_vec, time_diff2_vec)
+file.write("};\n\n")
 
 if conditioning == True:
-    f.write("conditioning number for phifem, FEM standard, phi-FD, phi-FD2: \n")
-    f.write("\\addplot[mark=*, blue] coordinates {\n")
-    output_latex(f, size_mesh_phi_vec, cond_phifem_vec)
-    f.write("};\n\\addplot[mark=*] coordinates {\n")
-    output_latex(f, size_mesh_standard_vec, cond_standard_vec)
-    f.write("};\n\\addplot[mark=*,red] coordinates {\n")
-    output_latex(f, size_mesh_phi_vec, cond_diff_vec)
-    f.write("};\n\\addplot[mark=*,orange] coordinates {\n")
-    output_latex(f, size_mesh_phi_vec, cond_diff2_vec)
-    f.write("};\n\n")
+    file.write("conditioning number for phifem, FEM standard, SW, phi-FD, phi-FD2: \n")
+    file.write("\\addplot[mark=x, darkviolet] coordinates {\n")
+    output_latex(file, size_mesh_phi_vec, cond_phifem_vec)
+    file.write("};\n\\addplot[mark=*] coordinates {\n")
+    output_latex(file, size_mesh_standard_vec, cond_standard_vec)
+    file.write("};\n\\addplot[mark=+,ForestGreen] coordinates {\n")
+    output_latex(file, size_mesh_diff_SW_vec, cond_diff_SW_vec)
+    file.write("};\n\\addplot[mark=diamond*,cardinal] coordinates {\n")
+    output_latex(file, size_mesh_diff_vec, cond_diff_vec)
+    file.write("};\n\\addplot[mark=triangle*,coral] coordinates {\n")
+    output_latex(file, size_mesh_diff2_vec, cond_diff2_vec)
+    file.write("};\n\n")
 
-f.write("Order of convergence in L2\n")
-f.write(str(round(order_L2_phifem, 2)))
-f.write("&")
-f.write(str(round(order_L2_standard, 2)))
-f.write("&")
-f.write(str(round(order_L2_diff, 2)))
-f.write("&")
-f.write(str(round(order_L2_diff2, 2)))
-f.write("\\\\\n\n")
+file.write("Order of convergence in L2\n")
+file.write(str(round(order_L2_phifem, 2)))
+file.write("&")
+file.write(str(round(order_L2_standard, 2)))
+file.write("&")
+file.write(str(round(order_L2_diff_SW, 2)))
+file.write("&")
+file.write(str(round(order_L2_diff, 2)))
+file.write("&")
+file.write(str(round(order_L2_diff2, 2)))
+file.write("\\\\\n\n")
 
-f.write("Order of convergence in Linf\n")
-f.write(str(round(order_Linf_phifem, 2)))
-f.write("&")
-f.write(str(round(order_Linf_standard, 2)))
-f.write("&")
-f.write(str(round(order_Linf_diff, 2)))
-f.write("&")
-f.write(str(round(order_Linf_diff2, 2)))
-f.write("\\\\\n\n")
+file.write("Order of convergence in Linf\n")
+file.write(str(round(order_Linf_phifem, 2)))
+file.write("&")
+file.write(str(round(order_Linf_standard, 2)))
+file.write("&")
+file.write(str(round(order_Linf_diff_SW, 2)))
+file.write("&")
+file.write(str(round(order_Linf_diff, 2)))
+file.write("&")
+file.write(str(round(order_Linf_diff2, 2)))
+file.write("\\\\\n\n")
 
-f.write("Order of convergence in H1\n")
-f.write(str(round(order_H1int_phifem, 2)))
-f.write("&")
-f.write(str(round(order_H1int_standard, 2)))
-f.write("&")
-f.write(str(round(order_H1int_diff, 2)))
-f.write("&")
-f.write(str(round(order_H1int_diff2, 2)))
-f.write("\\\\\n\n")
+file.write("Order of convergence in H1\n")
+file.write(str(round(order_H1int_phifem, 2)))
+file.write("&")
+file.write(str(round(order_H1int_standard, 2)))
+file.write("&")
+file.write(str(round(order_H1int_diff_SW, 2)))
+file.write("&")
+file.write(str(round(order_H1int_diff, 2)))
+file.write("&")
+file.write(str(round(order_H1int_diff2, 2)))
+file.write("\\\\\n\n")
 
-f.close()
+file.close()
