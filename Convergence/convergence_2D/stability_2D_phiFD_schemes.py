@@ -260,12 +260,8 @@ for ii in range(len(NN)):
             u = spsolve(A, b).reshape(Ny + 1, Nx + 1)
             e = u - uref
 
-            eL2 = np.sqrt(np.sum(e * e * (1 - indOut)) * hx * hy) / np.sqrt(
-                np.sum(uref * uref * (1 - indOut)) * hx * hy
-            )
-            emax = np.max(np.abs(e * (1 - indOut))) / np.max(
-                np.abs(uref * (1 - indOut))
-            )
+            eL2 = np.sqrt(np.sum(e * e * ind)) / np.sqrt(np.sum(uref * uref * ind))
+            emax = np.max(np.abs(e * ind)) / np.max(np.abs(uref * ind))
 
             ex = (e[:, 1 : Nx + 1] - e[:, 0:Nx]) / hx
             urefx = (uref[:, 1 : Nx + 1] - uref[:, 0:Nx]) / hx
@@ -578,12 +574,10 @@ for iii in range(len(NN)):
             u = spsolve(A, b).reshape(Ny + 1, Nx + 1)
             e = u - uref
 
-            eL2 = np.sqrt(np.sum(e * e * (1 - indOut)) * hx * hy) / np.sqrt(
-                np.sum(uref * uref * (1 - indOut)) * hx * hy
+            eL2 = np.sqrt(np.sum(e * e * ind) * hx * hy) / np.sqrt(
+                np.sum(uref * uref * ind) * hx * hy
             )
-            emax = np.max(np.abs(e * (1 - indOut))) / np.max(
-                np.abs(uref * (1 - indOut))
-            )
+            emax = np.max(np.abs(e * ind)) / np.max(np.abs(uref * ind))
 
             ex = (e[:, 1 : Nx + 1] - e[:, 0:Nx]) / hx
             urefx = (uref[:, 1 : Nx + 1] - uref[:, 0:Nx]) / hx
