@@ -72,7 +72,7 @@ def problem_with_solution(case, compute_std_fem=False):
         )
 
     else:
-        raise Exception(f"unknown case:{case}")
+        raise Exception("unknown case:{}".format(case))
 
     uref_fn = sympy.lambdify([x_symb, y_symb, z_symb], u1)
     f = sympy.lambdify([x_symb, y_symb, z_symb], f1)
@@ -226,9 +226,9 @@ if __name__ == "__main__":
     mesh = Mesh(48)
     ind, A = build_matrices(mesh=mesh, phi=phi)
     b = force(mesh, ind, f)
-    print(f"{mesh.Nx=}")
-    print(f"{(mesh.Nx+1)**3=}")
-    print(f"{A.shape=}")
-    print(f"{ind.shape=}")
+    print(f"mesh.Nx = {mesh.Nx}")
+    print(f"(mesh.Nx + 1)³ = {(mesh.Nx+1)**3}")
+    print(f"A.shape = {A.shape}")
+    print(f"ind.shape = {ind.shape}")
     # u = sp.linalg.spsolve(A, b)
     # print(errors_L2_Loo_fn(ind, u, uref_fn(mesh.X, mesh.Y, mesh.Z), mesh))

@@ -49,7 +49,7 @@ def solve_multiRes(
     N_coarse = min(100, N)
     if maxiter == None:
         maxiter = max(20, (N - N_coarse) // 5)
-    print(f"{maxiter=}")
+    print(f"maxiter = {maxiter}")
     N_iterative = N_final
 
     mesh_fine = Mesh(N_iterative)

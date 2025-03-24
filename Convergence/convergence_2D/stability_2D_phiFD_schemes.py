@@ -145,7 +145,7 @@ for ii in range(len(NN)):
         error_H1int_diff_vec_change_sigma = []
         cond_diff_vec_change_sigma = []
         for sigma in Sigma:
-            print(f"{sigma=} {gamma=}")
+            print("sigma = {} gamma = {}".format(sigma, gamma))
             D2x = (1 / hx / hx) * sp.diags(
                 diagonals=[-1, 2, -1], offsets=[-1, 0, 1], shape=(Nx + 1, Nx + 1)
             )
@@ -340,7 +340,7 @@ else:
     )
 
     np.save("full_res_without_cond_phiFD1.npy", full_results_array_1)
-print(f"{full_results_array_1.shape=}")
+print("full_results_array_1.shape = {}".format(full_results_array_1.shape))
 
 
 interp_errors_2 = []
@@ -389,7 +389,7 @@ for iii in range(len(NN)):
         error_H1int_diff_vec_change_sigma = []
         cond_diff_vec_change_sigma = []
         for sigma in Sigma:
-            print(f"{sigma=} {gamma=}")
+            print("sigma = {} \tgamma = {}".format(sigma, gamma))
 
             D2x = (1 / hx / hx) * sp.diags(
                 diagonals=[-1, 2, -1], offsets=[-1, 0, 1], shape=(Nx + 1, Nx + 1)
@@ -656,7 +656,7 @@ else:
     )
 
     np.save("full_res_without_cond_phiFD2.npy", full_results_array_2)
-print(f"{full_results_array_2.shape=}")
+print("full_results_array_2.shape = {}".format(full_results_array_2.shape))
 
 # Gamma = [0.001, 0.01, 0.1, 1.0, 10.0, 20.0]
 # Sigma = [0.001, 0.01, 0.1, 1.0, 5.0, 10.0, 20.0]
@@ -675,27 +675,27 @@ if conditioning == True:
         plt.Line2D([0], [0], color="k", marker=markers[i], linestyle="")
         for i in range(len(NN))
     ]
-    labels = [f"$h=${size_mesh[i]:.2f}" for i in range(len(NN))]
+    labels = ["$h=${:.2f}".format(size_mesh[i]) for i in range(len(NN))]
     plt.subplot(2, 3, 1)
     for i in range(len(NN)):
         plt.loglog(
             Sigma,
             error_L2_diff_array_1[i, index_gamma_1, :],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Sigma,
             error_L2_diff_array_2[i, index_gamma_2, :],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
     plt.title(
-        f"$\phi$-FD 1: $\gamma=${Gamma[index_gamma_1]} $\phi$-FD 2: $\gamma=${Gamma[index_gamma_2]}",
+        "$\phi$-FD 1: $\gamma=${} $\phi$-FD 2: $\gamma=${}".format(Gamma[index_gamma_1], Gamma[index_gamma_2]),
         fontsize=16,
     )
-    plt.xlabel(f"$\sigma$", fontsize=16)
-    plt.ylabel(f"$L^2$ error", fontsize=16)
+    plt.xlabel("$\sigma$", fontsize=16)
+    plt.ylabel("$L^2$ error", fontsize=16)
     plt.legend(handles=lines_legend, labels=labels, ncol=2, fontsize=16)
     plt.subplot(2, 3, 2)
     for i in range(len(NN)):
@@ -703,19 +703,19 @@ if conditioning == True:
             Sigma,
             error_H1int_diff_array_1[i, index_gamma_1, :],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Sigma,
             error_H1int_diff_array_2[i, index_gamma_2, :],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
 
-    plt.xlabel(f"$\sigma$", fontsize=16)
-    plt.ylabel(f"$H^1$ error")
+    plt.xlabel("$\sigma$", fontsize=16)
+    plt.ylabel("$H^1$ error")
     plt.title(
-        f"$\phi$-FD 1: $\gamma=${Gamma[index_gamma_1]} $\phi$-FD 2: $\gamma=${Gamma[index_gamma_2]}",
+        "$\phi$-FD 1: $\gamma=${} $\phi$-FD 2: $\gamma=${}".format(Gamma[index_gamma_1], Gamma[index_gamma_2]),
         fontsize=16,
     )
     plt.legend(ncol=2, fontsize=16)
@@ -725,20 +725,20 @@ if conditioning == True:
             Sigma,
             cond_diff_array_1[i, index_gamma_1, :],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Sigma,
             cond_diff_array_2[i, index_gamma_2, :],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
     plt.title(
-        f"$\phi$-FD 1: $\gamma=${Gamma[index_gamma_1]} $\phi$-FD 2: $\gamma=${Gamma[index_gamma_2]}",
+        "$\phi$-FD 1: $\gamma=${} $\phi$-FD 2: $\gamma=${}".format(Gamma[index_gamma_1], Gamma[index_gamma_2]),
         fontsize=16,
     )
-    plt.xlabel(f"$\sigma$", fontsize=16)
-    plt.ylabel(f"Condition number", fontsize=16)
+    plt.xlabel("$\sigma$", fontsize=16)
+    plt.ylabel("Condition number", fontsize=16)
     plt.legend(ncol=2, fontsize=16)
 
     plt.subplot(2, 3, 4)
@@ -747,20 +747,20 @@ if conditioning == True:
             Gamma,
             error_L2_diff_array_1[i, :, index_sigma_1],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Gamma,
             error_L2_diff_array_2[i, :, index_sigma_2],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
     plt.title(
-        f"$\phi$-FD 1: $\sigma=${Sigma[index_sigma_1]} $\phi$-FD 2: $\sigma=${Sigma[index_sigma_2]}",
+        "$\phi$-FD 1: $\sigma=${} $\phi$-FD 2: $\sigma=${}".format(Sigma[index_sigma_1], Sigma[index_sigma_2]),
         fontsize=16,
     )
-    plt.xlabel(f"$\gamma$", fontsize=16)
-    plt.ylabel(f"$L^2$ error", fontsize=16)
+    plt.xlabel("$\gamma$", fontsize=16)
+    plt.ylabel("$L^2$ error", fontsize=16)
     plt.legend(ncol=2, fontsize=16)
     plt.subplot(2, 3, 5)
     for i in range(len(NN)):
@@ -768,19 +768,19 @@ if conditioning == True:
             Gamma,
             error_H1int_diff_array_1[i, :, index_sigma_1],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Gamma,
             error_H1int_diff_array_2[i, :, index_sigma_2],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
-    plt.xlabel(f"$\gamma$", fontsize=16)
-    plt.ylabel(f"$H^1$ error", fontsize=16)
+    plt.xlabel("$\gamma$", fontsize=16)
+    plt.ylabel("$H^1$ error", fontsize=16)
     plt.legend(ncol=2, fontsize=16)
     plt.title(
-        f"$\phi$-FD 1: $\sigma=${Sigma[index_sigma_1]} $\phi$-FD 2: $\sigma=${Sigma[index_sigma_2]}",
+        "$\phi$-FD 1: $\sigma=${} $\phi$-FD 2: $\sigma=${}".format(Sigma[index_sigma_1], Sigma[index_sigma_2]),
         fontsize=16,
     )
     plt.subplot(2, 3, 6)
@@ -789,20 +789,20 @@ if conditioning == True:
             Gamma,
             cond_diff_array_1[i, :, index_sigma_1],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Gamma,
             cond_diff_array_2[i, :, index_sigma_2],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
 
-    plt.xlabel(f"$\gamma$", fontsize=16)
-    plt.ylabel(f"Condition number", fontsize=16)
+    plt.xlabel("$\gamma$", fontsize=16)
+    plt.ylabel("Condition number", fontsize=16)
     plt.legend(ncol=2, fontsize=16)
     plt.title(
-        f"$\phi$-FD 1: $\sigma=${Sigma[index_sigma_1]} $\phi$-FD 2: $\sigma=${Sigma[index_sigma_2]}",
+        "$\phi$-FD 1: $\sigma=${} $\phi$-FD 2: $\sigma=${}".format(Sigma[index_sigma_1], Sigma[index_sigma_2]),
         fontsize=16,
     )
     plt.tight_layout()
@@ -819,7 +819,7 @@ else:
         plt.Line2D([0], [0], color="k", marker=markers[i], linestyle="")
         for i in range(len(NN))
     ]
-    labels = [f"$h=${size_mesh[i]:.2f}" for i in range(len(NN))]
+    labels = ["$h=${:.2f}".format(size_mesh[i]) for i in range(len(NN))]
 
     plt.subplot(2, 2, 1)
     for i in range(len(NN)):
@@ -827,20 +827,20 @@ else:
             Sigma,
             error_L2_diff_array_1[i, index_gamma_1, :],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Sigma,
             error_L2_diff_array_2[i, index_gamma_2, :],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
     plt.title(
-        f"$\phi$-FD 1: $\gamma=${Gamma[index_gamma_1]} $\phi$-FD 2: $\gamma=${Gamma[index_gamma_2]}",
+        "$\phi$-FD 1: $\gamma=${} $\phi$-FD 2: $\gamma=${}".format(Gamma[index_gamma_1], Gamma[index_gamma_2]),
         fontsize=16,
     )
-    plt.xlabel(f"$\sigma$", fontsize=16)
-    plt.ylabel(f"$L^2$ error", fontsize=16)
+    plt.xlabel("$\sigma$", fontsize=16)
+    plt.ylabel("$L^2$ error", fontsize=16)
     plt.legend(handles=lines_legend, labels=labels, ncol=2, fontsize=16)
     # plt.legend(ncol=2, fontsize=16)
     plt.subplot(2, 2, 2)
@@ -849,19 +849,19 @@ else:
             Sigma,
             error_H1int_diff_array_1[i, index_gamma_1, :],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Sigma,
             error_H1int_diff_array_2[i, index_gamma_2, :],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
 
-    plt.xlabel(f"$\sigma$", fontsize=16)
-    plt.ylabel(f"$H^1$ error")
+    plt.xlabel("$\sigma$", fontsize=16)
+    plt.ylabel("$H^1$ error")
     plt.title(
-        f"$\phi$-FD 1: $\gamma=${Gamma[index_gamma_1]} $\phi$-FD 2: $\gamma=${Gamma[index_gamma_2]}",
+        "$\phi$-FD 1: $\gamma=${} $\phi$-FD 2: $\gamma=${}".format(Gamma[index_gamma_1], Gamma[index_gamma_2]),
         fontsize=16,
     )
     plt.legend(handles=lines_legend, labels=labels, ncol=2, fontsize=16)
@@ -872,20 +872,20 @@ else:
             Gamma,
             error_L2_diff_array_1[i, :, index_sigma_1],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Gamma,
             error_L2_diff_array_2[i, :, index_sigma_2],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
     plt.title(
-        f"$\phi$-FD 1: $\sigma=${Sigma[index_sigma_1]} $\phi$-FD 2: $\sigma=${Sigma[index_sigma_2]}",
+        "$\phi$-FD 1: $\sigma=${} $\phi$-FD 2: $\sigma=${}".format(Sigma[index_sigma_1], Sigma[index_sigma_2]),
         fontsize=16,
     )
-    plt.xlabel(f"$\gamma$", fontsize=16)
-    plt.ylabel(f"$L^2$ error", fontsize=16)
+    plt.xlabel("$\gamma$", fontsize=16)
+    plt.ylabel("$L^2$ error", fontsize=16)
     plt.legend(handles=lines_legend, labels=labels, ncol=2, fontsize=16)
     # plt.legend(ncol=2, fontsize=16)
     plt.subplot(2, 2, 4)
@@ -894,20 +894,20 @@ else:
             Gamma,
             error_H1int_diff_array_1[i, :, index_sigma_1],
             linestyle_1[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
         plt.loglog(
             Gamma,
             error_H1int_diff_array_2[i, :, index_sigma_2],
             linestyle_2[i],
-            label=f"$h=${size_mesh[i]:.2f}",
+            label="$h=${:.2f}".format(size_mesh[i]),
         )
-    plt.xlabel(f"$\gamma$", fontsize=16)
-    plt.ylabel(f"$H^1$ error", fontsize=16)
+    plt.xlabel("$\gamma$", fontsize=16)
+    plt.ylabel("$H^1$ error", fontsize=16)
     plt.legend(handles=lines_legend, labels=labels, ncol=2, fontsize=16)
     # plt.legend(ncol=2, fontsize=16)
     plt.title(
-        f"$\phi$-FD 1: $\sigma=${Sigma[index_sigma_1]} $\phi$-FD 2: $\sigma=${Sigma[index_sigma_2]}",
+        "$\phi$-FD 1: $\sigma=${} $\phi$-FD 2: $\sigma=${}".format(Sigma[index_sigma_1], Sigma[index_sigma_2]),
         fontsize=16,
     )
     plt.tight_layout()

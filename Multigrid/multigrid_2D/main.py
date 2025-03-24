@@ -121,7 +121,7 @@ def go_creation():
             list_xs_L2, list_xs_Loo, list_ys = [], [], []
             index = 0
             for N in N_multigrid:
-                print(f"{N=}")
+                print(f"N = {N}")
                 index += 1
                 if explicit_expression:
                     if (
