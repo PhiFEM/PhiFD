@@ -765,7 +765,7 @@ for iii in range(Iter):
         )
 
     npcoef = np.array(coef)
-    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
     # penalization outside
     D = sp.diags(diagonals=indOut.ravel())
@@ -976,7 +976,7 @@ for iii in range(Iter):
         AddMat(rav(i, j, k_ + 1), i, j, k_ + 1, phik * phik / phiS)
 
     npcoef = (gamma / hx / hy) * np.array(coef)
-    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
     # ghost penalty
     maskGx = sp.diags(diagonals=actGx.ravel())
@@ -1208,7 +1208,7 @@ for iii in range(Iter):
         AddMat(rav(i, j, k_ + 1), i, j, k_ + 1, aip1 * aip1 / phiS)
 
     npcoef = (gamma / hx / hy) * np.array(coef)
-    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
     def rav(i, j, k):
         return np.ravel_multi_index([j, i, k], (Ny + 1, Nx + 1, Nz + 1))
@@ -1324,7 +1324,7 @@ for iii in range(Iter):
             AddMat(rav(i, j, k__ + 2), i, j, k__ + 2, 1.0)
 
     npcoef = sigma / (hx * hy) * np.array(coef)
-    C = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    C = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
     # penalization outside
     D = sp.diags(diagonals=indOut.ravel())
@@ -1406,7 +1406,7 @@ plt.loglog(
     "--",
     label=r"$\mathcal{O}(h)$",
 )
-plt.legend(ncols=2)
+plt.legend(ncol=2)
 
 plt.subplot(1, 3, 2)
 plt.loglog(size_mesh_standard_vec, error_Linf_standard_vec, "-+", label="Linf std")
@@ -1424,7 +1424,7 @@ plt.loglog(
     "--",
     label=r"$\mathcal{O}(h)$",
 )
-plt.legend(ncols=2)
+plt.legend(ncol=2)
 
 plt.subplot(1, 3, 3)
 plt.loglog(size_mesh_standard_vec, error_H1int_standard_vec, "-+", label="H1 std")
@@ -1441,7 +1441,7 @@ plt.loglog(
     "--",
     label=r"$\mathcal{O}(h)$",
 )
-plt.legend(ncols=2)
+plt.legend(ncol=2)
 
 plt.savefig("errors.pdf")
 plt.show()

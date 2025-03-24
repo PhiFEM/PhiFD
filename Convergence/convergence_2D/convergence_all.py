@@ -723,7 +723,7 @@ for ii in range(init_Iter - 1, Iter):
         )
 
     npcoef = (gamma / hx / hy) * np.array(coef)
-    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
     # ghost penalty
     maskGx = sp.diags(diagonals=actGx.ravel())
@@ -928,7 +928,7 @@ for iii in range(init_Iter - 1, Iter):
 
     # penalistion of the boundary condition
     npcoef = (gamma / hx / hy) * np.array(coef)
-    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
     row = []
     col = []
     coef = []  # for the matrix implementing BC
@@ -1018,7 +1018,7 @@ for iii in range(init_Iter - 1, Iter):
 
     # penalistion of the boundary condition
     npcoef = 1.0 / (hx**2) * np.array(coef)
-    C = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    C = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
     # penalization outside
     D = sp.diags(diagonals=indOut.ravel())
@@ -1326,7 +1326,7 @@ if conditioning == False:
         "--",
         label=r"$\mathcal{O}(h)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.subplot(1, 3, 2)
     plt.loglog(size_mesh_standard_vec, error_Linf_standard_vec, "-+", label="Linf std")
@@ -1346,7 +1346,7 @@ if conditioning == False:
         "--",
         label=r"$\mathcal{O}(h)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.subplot(1, 3, 3)
     plt.loglog(size_mesh_standard_vec, error_H1int_standard_vec, "-+", label="H1 std")
@@ -1366,7 +1366,7 @@ if conditioning == False:
         "--",
         label=r"$\mathcal{O}(h)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.savefig("errors_3_no_cond.pdf")
     plt.show()
@@ -1386,7 +1386,7 @@ else:
         "--",
         label=r"$\mathcal{O}(h^2)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.subplot(2, 2, 2)
     plt.loglog(size_mesh_standard_vec, error_Linf_standard_vec, "-+", label="Linf std")
@@ -1406,7 +1406,7 @@ else:
         "--",
         label=r"$\mathcal{O}(h^2)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.subplot(2, 2, 3)
     plt.loglog(size_mesh_standard_vec, error_H1int_standard_vec, "-+", label="H1 std")
@@ -1426,7 +1426,7 @@ else:
         "--",
         label=r"$\mathcal{O}(h^2)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.subplot(2, 2, 4)
     plt.loglog(size_mesh_standard_vec, cond_standard_vec, "-+", label="Cond std")
@@ -1445,7 +1445,7 @@ else:
         "--",
         label=r"$\mathcal{O}(h^2)$",
     )
-    plt.legend(ncols=2)
+    plt.legend(ncol=2)
 
     plt.savefig("errors_3_cond.pdf")
     plt.show()

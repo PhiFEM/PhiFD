@@ -157,7 +157,7 @@ def build_matrices(mesh: Mesh, phi):
         AddMat(rav(i, j + 1), i, j + 1, phiji[j, i] * phiji[j, i] / phiS)
 
     npcoef = (gamma / mesh.hx / mesh.hy) * np.array(coef)
-    B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+    B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
     # ghost penalty
     maskGx = sp.diags(diagonals=actGx.ravel())
     maskGy = sp.diags(diagonals=actGy.ravel())

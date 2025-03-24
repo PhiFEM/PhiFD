@@ -248,7 +248,7 @@ for ii in range(len(NN)):
             b = (ind * b).ravel()
             D = sp.diags(diagonals=indOut.ravel())
             npcoef = (gamma / hx / hy) * np.array(coef)
-            B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+            B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
             C = (
                 sigma
                 * hx
@@ -472,7 +472,7 @@ for iii in range(len(NN)):
 
             # penalistion of the boundary condition
             npcoef = (gamma / hx / hy) * np.array(coef)
-            B = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+            B = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
             row = []
             col = []
             coef = []  # for the matrix implementing BC
@@ -562,7 +562,7 @@ for iii in range(len(NN)):
 
             # penalistion of the boundary condition
             npcoef = 1.0 / (hx**2) * np.array(coef)
-            C = sp.coo_array((npcoef, (row, col)), shape=(Ndof, Ndof))
+            C = sp.coo_matrix((npcoef, (row, col)), shape=(Ndof, Ndof))
 
             # penalization outside
             D = sp.diags(diagonals=indOut.ravel())
