@@ -1444,7 +1444,7 @@ plt.loglog(
 plt.legend(ncol=2)
 
 plt.savefig("errors.pdf")
-plt.show()
+# plt.show()
 
 
 def order(a, b):

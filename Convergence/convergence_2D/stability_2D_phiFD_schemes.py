@@ -809,7 +809,7 @@ if conditioning == True:
     )
     plt.tight_layout()
     plt.savefig("res_with_cond.pdf")
-    plt.show()
+    # plt.show()
 
 
 else:
@@ -914,4 +914,4 @@ else:
     )
     plt.tight_layout()
     plt.savefig("res_without_cond.pdf")
-    plt.show()
+    # plt.show()

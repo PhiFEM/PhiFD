@@ -309,9 +309,9 @@ def go_creation():
         plt.yticks(fontsize=12)
         plt.tight_layout()
         plt.savefig(f"output_{test_case}.pdf")
-        show_fig = len(test_cases) == 1
-        if show_fig:
-            plt.show()
+        # show_fig = len(test_cases) == 1
+        # if show_fig:
+            # plt.show()
 
 
 def get_point(df):

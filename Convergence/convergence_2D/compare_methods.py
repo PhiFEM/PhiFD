@@ -1375,7 +1375,7 @@ if conditioning == False:
     plt.legend(ncol=2)
 
     plt.savefig("errors_3_no_cond.pdf")
-    plt.show()
+    # plt.show()
 
 else:
     plt.figure(figsize=(12, 12))
@@ -1454,4 +1454,4 @@ else:
     plt.legend(ncol=2)
 
     plt.savefig("errors_3_cond.pdf")
-    plt.show()
+    # plt.show()
