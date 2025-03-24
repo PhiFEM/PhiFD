@@ -191,5 +191,5 @@ if __name__ == "__main__":
     ind, A = build_matrices(mesh=mesh, phi=phi)
     b = force(mesh, ind, f)
 
-    u = sp.linalg.spsolve(A, b)
+    u = linalg.spsolve(A, b)
     print(errors_L2_Loo_fn(ind, u, uref_fn(mesh.X, mesh.Y), mesh))

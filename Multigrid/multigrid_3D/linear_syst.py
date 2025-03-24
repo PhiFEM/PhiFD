@@ -54,7 +54,7 @@ def iterative_solver_controled(
 ):
     ite_info = Iterative_info(r_tol, error_fn, maxiter)
     try:
-        sla.bicgstab(A, b, x0=u0, rtol=1e-10, callback=ite_info, maxiter=1000)
+        sla.bicgstab(A, b, x0=u0, tol=1e-10, callback=ite_info, maxiter=1000)
     except StopIteration:
         pass
     return ite_info.best_u, ite_info

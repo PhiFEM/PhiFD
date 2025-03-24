@@ -28,7 +28,6 @@ def interpolation_via_reshape(img_in: Any, input_size, output_size, order, prefi
         zoom=zoom,
         order=order,
         prefilter=prefilter,
-        grid_mode=False,
         mode="constant",
     )
 
