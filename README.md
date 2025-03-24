@@ -1,26 +1,60 @@
-# $\phi$-FD : A well-conditioned finite difference method inspired by $\phi$-FEM for general geometries on elliptic PDEs
+# $\varphi$-FD : A well-conditioned finite difference method inspired by $\varphi$-FEM for general geometries on elliptic PDEs
 
-**Authors: Michel Duprez, Vanessa Lleras, Alexei Lozinski, Vincent Vigon, and Killian Vuillemot**
+This repository contains the code used in the study "$\varphi$-FD : A well-conditioned finite difference method inspired by $\varphi$-FEM for general geometries on elliptic PDEs" Michel Duprez, Vanessa Lleras, Alexei Lozinski, Vincent Vigon, Killian Vuillemot ([preprint](https://hal.science/hal-04731164)).
 
-This repository contains all codes to reproduce results of the paper " $\phi$-FD : A well-conditioned finite difference method inspired by $\phi$-FEM for general geometries on elliptic PDEs", in collaboration with Michel Duprez, Vanessa Lleras, Alexei Lozinski, and Vincent Vigon. 
+## This repository is for reproducibility purposes only
 
-The directory `./Convergence/` contains the Python codes to run all the methods for 2D and 3D cases, to analyze the convergence of each method.
-The `./Multigrid/` contains everything to run the multigrid approach on 2D and 3D test cases. 
+It is "frozen in time" and not maintained.
+To use our latest $\varphi$-FEM code please refer to the [phiFEM repository](https://github.com/PhiFEM/Poisson-Dirichlet-fenicsx).
 
-To execute these codes, you will need several packages : 
-[*FEniCS*](https://fenicsproject.org/),
-[*numpy*](https://numpy.org/doc/stable/index.html),
-[*matplotlib*](https://matplotlib.org/),
-[*seaborn*](https://seaborn.pydata.org/),
-[*pandas*](https://pandas.pydata.org/),
-[*SciPy*](https://scipy.org/).
+## Usage
 
-The easiest way to perform these installations is by using Anaconda, with for example the following lines: 
+### Prerequisites
 
-```bash 
-conda env create -f phiFD.yml 
-conda activate phiFD
-conda install -c conda-forge superlu_dist=6.2.0
-pip3 install mpi4py==3.0.3 --no-binary mpi4py --user --force --no-cache-dir
-pip install numpy matplotlib seaborn pandas scipy 
+- [Git](https://git-scm.com/),
+- [Docker](https://www.docker.com/)/[podman](https://podman.io/).
+
+The image is based on the legacy FEniCS image: quay.io/fenicsproject/stable:latest and the [`seaborn`](https://seaborn.pydata.org/) python library.
+
+### Install the image and launch the container
+
+1) Clone this repository in a dedicated directory:
+   
+   ```bash
+   mkdir phifd/
+   git clone https://github.com/PhiFEM/publication_PhiFD.git phifd
+   ```
+
+2) Download the images from the docker.io registry, in the main directory:
+   
+   ```bash
+   export CONTAINER_ENGINE=docker
+   cd phifd
+   sudo -E bash pull-image.sh
+   ```
+
+3) Launch the container:
+
+   ```bash
+   sudo -E bash run-image.sh
+   ```
+
+### Example of usage
+
+From the main directory `phifd`, launch the $\varphi$-FD example:
+
+```bash
+python3 phiFD_2D.py
 ```
+
+## Issues and support
+
+Please use the issue tracker to report any issues.
+
+## Authors (alphabetical)
+
+[Michel Duprez](https://michelduprez.fr/), Inria Nancy Grand-Est  
+[Vanessa Lleras](https://vanessalleras.wixsite.com/lleras), Université de Montpellier  
+[Alexei Lozinski](https://orcid.org/0000-0003-0745-0365), Université de Franche-Comté  
+[Vincent Vignon](https://irma.math.unistra.fr/~vigon/), Université de Strasbourg
+[Killian Vuillemot](https://kvuillemot.github.io/), Université de Montpellier
