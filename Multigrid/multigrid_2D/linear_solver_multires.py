@@ -1,7 +1,4 @@
 from typing import Any
-import scipy
-import scipy.sparse as sps
-import scipy.sparse.linalg as sla
 import time
 from linear_syst import (
     linear_direct,
@@ -11,7 +8,6 @@ from linear_syst import (
 from phiFD import Mesh, build_matrices, force
 import scipy.ndimage as sndimage
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 pp = print

@@ -2,7 +2,6 @@ import numpy as np
 import scipy.sparse as sp
 
 pp = print
-import pylab as plt
 
 
 class Mesh:
@@ -83,9 +82,6 @@ def problem_with_solution(case, compute_std_fem=False):
         return u1, f1
     else:
         return phi, f, uref_fn_numpy
-
-
-import time
 
 
 def build_matrices(mesh: Mesh, phi):

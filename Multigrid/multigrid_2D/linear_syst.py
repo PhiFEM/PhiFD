@@ -1,10 +1,6 @@
-from typing import Any
 import numpy as np
-import pandas as pd
 import scipy.sparse.linalg as sla
 import time
-from matplotlib import pyplot as plt
-import scipy.sparse as sps
 
 pp = print
 

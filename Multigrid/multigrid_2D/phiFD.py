@@ -1,8 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
+from scipy.sparse import linalg
 
 pp = print
-import pylab as plt
 
 
 class Mesh:
@@ -78,9 +78,6 @@ def problem_with_solution(case, compute_std_fem=False):
         return u1, f1
     else:
         return phi, f, uref_fn_numpy
-
-
-import time
 
 
 def build_matrices(mesh: Mesh, phi):
@@ -187,8 +184,6 @@ def errors_L2_Loo_fn(ind, u, uref, mesh):
 
     return {"L2": eL2, "Loo": emax}
 
-
-from scipy.optimize import linprog
 
 if __name__ == "__main__":
     phi, f, uref_fn = problem_with_solution("circle_cos")

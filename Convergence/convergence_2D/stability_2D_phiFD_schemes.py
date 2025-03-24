@@ -2,10 +2,8 @@ import numpy as np
 import dolfin as df
 import sympy
 import matplotlib.pyplot as plt
-from time import time
 import scipy.sparse as sp
 from scipy.sparse.linalg import spsolve
-import pylab as py
 import seaborn as sns
 
 sns.set_theme("paper")

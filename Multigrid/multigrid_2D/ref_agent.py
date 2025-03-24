@@ -1,9 +1,6 @@
 import os
 import pickle
 import time
-from matplotlib import pyplot as plt
-import scipy.sparse.linalg as sla
-import scipy.sparse as sps
 from linear_solver_multires import interpolation_via_reshape
 from linear_syst import linear_direct, iterative_solver_controled, ErrorFnAb_relative
 from phiFD import (

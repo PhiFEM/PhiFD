@@ -1,11 +1,6 @@
-from typing import Any
 import numpy as np
-import pandas as pd
 import scipy.sparse.linalg as sla
 import time
-from matplotlib import pyplot as plt
-import scipy.sparse as sps
-from phiFD import errors_L2_Loo_fn
 
 pp = print
 
