@@ -154,7 +154,7 @@ for ii in range(len(NN)):
             )
             D2x_2d = sp.kron(sp.eye(Ny + 1), D2x)
             D2y_2d = sp.kron(D2y, sp.eye(Nx + 1))
-            A = mask @ (D2x_2d + D2y_2d)
+            A = mask * (D2x_2d + D2y_2d)
             row = []
             col = []
             coef = []
@@ -251,7 +251,7 @@ for ii in range(len(NN)):
                 sigma
                 * hx
                 * hy
-                * (D2x_2d.T @ maskGx @ D2x_2d + D2y_2d.T @ maskGy @ D2y_2d)
+                * (D2x_2d.T * maskGx * D2x_2d + D2y_2d.T * maskGy * D2y_2d)
             )
 
             A = (A + B + C + D).tocsr()
@@ -402,7 +402,7 @@ for iii in range(len(NN)):
             D2x_2d = sp.kron(sp.eye(Ny + 1), D2x)
             D2y_2d = sp.kron(D2y, sp.eye(Nx + 1))
 
-            A = mask @ (D2x_2d + D2y_2d)
+            A = mask * (D2x_2d + D2y_2d)
             # boundary conditions
             row = []
             col = []
